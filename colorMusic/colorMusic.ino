@@ -28,8 +28,8 @@
 
    **************************************************
    Разработано: AlexGyver
-   Страница проекта: http://alexgyver.ru/color-music/
-   GitHub: https://github.com/AlexGyver/Color-Music/
+   Страница проекта: http://alexgyver.ru/colormusic/
+   GitHub: https://github.com/AlexGyver/ColorMusic
 */
 
 // --------------------------- НАСТРОЙКИ ---------------------------
