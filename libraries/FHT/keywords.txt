@@ -1,0 +1,38 @@
+#######################################
+# Syntax Coloring Map For ArduinoFHT
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+FHT	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+fht_run	KEYWORD2
+fht_reorder	KEYWORD2
+fht_window	KEYWORD2
+fht_mag_log	KEYWORD2
+fht_mag_lin	KEYWORD2
+fht_mag_lin8	KEYWORD2
+fht_mag_octave	KEYWORD2
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+FHT_N	LITERAL1
+SCALE	LITERAL1
+WINDOW	LITERAL1
+LIN_OUT	LITERAL1
+LIN_OUT8	LITERAL1
+OCTAVE	LITERAL1
+LOG_OUT	LITERAL1
+REORDER	LITERAL1
+OCT_NORM	LITERAL1
+
+
