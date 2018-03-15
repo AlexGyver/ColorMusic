@@ -48,27 +48,45 @@
 <a id="chapter-3"></a>
 ## Материалы и компоненты
 ### Ссылки оставлены на магазины, с которых я закупаюсь уже не один год
-* Arduino NANO с ногами http://ali.pub/2avsvp http://ali.pub/2avsw3
-* Arduino NANO без ног http://ali.pub/2avsyf http://ali.pub/2avsz7
-* Светодиоды с длинными ногами 100 штук
-	+ Синие http://ali.pub/2avtgw
-	+ Розовые http://ali.pub/2avtha
-	+ Красные http://ali.pub/2avti2
-	+ Зелёные http://ali.pub/2avtj1
-	+ Жёлтые http://ali.pub/2avtk7
-* Светодиоды по 10 штук
-	+ Синие http://ali.pub/2avtnp
-	+ Розовые http://ali.pub/2avtrz
-	+ Красные http://ali.pub/2avtw2
-	+ Жёлтые http://ali.pub/2avu14
-	+ Зелёные http://ali.pub/2avu1i
-* Сдвиговые регистры 74hc595n http://ali.pub/2avx3k
-* Транзисторы bd241c http://ali.pub/2avx20
-* Резисторы http://ali.pub/2avx54
-* Транзисторы TIP41C (на всякий случай) http://ali.pub/2avx63
-* Макетка 8 на 12 см http://ali.pub/2avxad
-* Гребёнка http://ali.pub/2avxen
+* Arduino NANO с ногами http://ali.ski/kJHHnL http://ali.ski/OnjivR
+* Arduino NANO без ног http://ali.ski/SK0PW http://ali.ski/GAq_mq
+* Адресная лента http://ali.ski/CjdQCL
+	- Black PCB / White PCB - цвет подложки ленты, чёрная / белая. В видео была чёрная
+	- 1m/5m - длина ленты в метрах (чтобы заказать 2 метра, берите два заказа 1m, очевидно)
+	- 30/60/74/96/100/144 - количество светодиодов на 1 метр ленты. В видео использовалась лента 60 диодов на метр
+	- IP30 лента без влагозащиты (как на видео)
+	- IP65 лента покрыта силиконом
+	- IP67 лента полностью в силиконовом коробе
+	- **Лента как на видео: Black PCB 5m 60 IP30**
+* Понижайка для автомобиля http://ali.ski/T5TpbR  http://ali.ski/yLUrOg
+* Блок питания 5V 2A http://ali.ski/I6Djw  http://ali.ski/6agpb
+* Адаптер питания 5.5х2.1 http://ali.ski/UWjFu
+* Аудио гнездо http://ali.ski/OBCRvl
+* Разветвитель наушников http://ali.ski/LuAcL  http://ali.ski/gjhGIB
+* Звук через микрофон
+	+ Микрофон модуль http://ali.pub/2cd5qr  http://ali.pub/2cd5th  http://ali.pub/2cd5un
+* Звук по FM радио
+	+ Передатчик FM  http://ali.ski/29sic  http://ali.ski/lklMs
+	+ Передатчик "сделай сам" http://ali.ski/YsmHW  http://ali.ski/wmNkEX
+	+ Приёмник FM из видео http://ali.ski/VsnK0  http://ali.ski/uVp3_
+	+ Понижайка 3.3V http://ali.ski/ftSy1x  http://ali.ski/acDEN
+* Звук по Bluetooth
+	+ Передатчик Bluetooth http://ali.ski/_94Dig
+	+ Приёмник "свисток" http://ali.ski/Rkuyvl
+	+ Ещё приёмник http://ali.ski/QyigGj
 * Кнопки, конденсаторы и крутилки ищите в любых магазинах для радиолюбителей, так как у китайцев можно купить только мешок 50 штук!
+* Алик
+	+ Куча резисторов http://ali.ski/FcTn6
+	+ Куча кнопок http://ali.ski/EBLzU
+	+ Куча конденсаторов http://ali.ski/_ARA6v
+	+ Куча потенциометров http://ali.ski/fAJrzc
+	+ Куча конденсаторов для микрофона http://ali.ski/eqALT
+* ЧипДип (Россия)
+	+ Резистор https://www.chipdip.ru/product0/27226
+	+ Кнопка https://www.chipdip.ru/product/tyco-2-1825910-7-fsm14jh
+	+ Конденсатор 10нф https://www.chipdip.ru/product0/42179
+	+ Конденсатор для микрофона https://www.chipdip.ru/product0/9000261766
+	+ Потенциометр https://www.chipdip.ru/product/r-0901n-b20k
 
 ## Вам скорее всего пригодится
 * [Всё для пайки (паяльники и примочки)](http://alexgyver.ru/all-for-soldering/)
