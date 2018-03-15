@@ -70,6 +70,7 @@
 	+ Передатчик "сделай сам" http://ali.ski/YsmHW  http://ali.ski/wmNkEX
 	+ Приёмник FM из видео http://ali.ski/VsnK0  http://ali.ski/uVp3_
 	+ Понижайка 3.3V http://ali.ski/ftSy1x  http://ali.ski/acDEN
+	+ Приёмник "сделай сам" http://ali.ski/26e_Jh
 * Звук по Bluetooth
 	+ Передатчик Bluetooth http://ali.ski/_94Dig
 	+ Приёмник "свисток" http://ali.ski/Rkuyvl
