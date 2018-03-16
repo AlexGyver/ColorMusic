@@ -97,6 +97,8 @@ int RAINBOW_SPEED = 6;     // скорость движения радуги (ч
 #define MONO 1              // 1 - только один канал (ПРАВЫЙ!!!!! SOUND_R!!!!!), 0 - два канала
 #define EXP 1.4             // степень усиления сигнала (для более "резкой" работы) (по умолчанию 1.4)
 #define POTENT 1            // 1 - используем потенциометр, 0 - используется внутренний источник опорного напряжения 1.1 В
+#define EMPTY_BRIGHT 15           // яркость "не горящих" светодиодов (0 - 255)
+#define EMPTY_COLOR HUE_PURPLE    // цвет "не горящих" светодиодов. Будет чёрный, если яркость 0
 
 // нижний порог шумов
 int LOW_PASS = 100;         // нижний порог шумов режим VU, ручная настройка
@@ -117,9 +119,6 @@ float MAX_COEF_FREQ = 1.2;        // коэффициент порога для 
 #define LOW_COLOR HUE_RED         // цвет низких частот
 #define MID_COLOR HUE_GREEN       // цвет средних
 #define HIGH_COLOR HUE_YELLOW     // цвет высоких
-
-#define EMPTY_BRIGHT 20           // яркость "не горящих" светодиодов (0 - 255)
-#define EMPTY_COLOR HUE_PURPLE    // цвет "не горящих" светодиодов. Будет чёрный, если яркость 0
 
 // режим стробоскопа
 int STROBE_PERIOD = 100;          // период вспышек, миллисекунды
@@ -169,7 +168,7 @@ int RUNNING_SPEED = 60;
 // —-— КНОПКИ ПУЛЬТА —---
 
 // ------------------------------ ДЛЯ РАЗРАБОТЧИКОВ --------------------------------
-#define MODE_AMOUNT 7      // количество режимов
+#define MODE_AMOUNT 8      // количество режимов
 
 // цвета (устаревшие)
 #define BLUE     0x0000FF
@@ -431,6 +430,12 @@ void animation() {
         leds[i] = ColorFromPalette(myPal, (count * index));   // заливка по палитре " от зелёного к красному"
         count++;
       }
+      if (EMPTY_BRIGHT > 0) {
+        for (int i = ((MAX_CH - 1) - Rlenght); i > 0; i--)
+          leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
+        for (int i = MAX_CH + Llenght; i < NUM_LEDS; i++)
+          leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
+      }
       break;
     case 1:
       count = 0;
@@ -442,6 +447,12 @@ void animation() {
       for (int i = (MAX_CH); i < (MAX_CH + Llenght); i++ ) {
         leds[i] = ColorFromPalette(RainbowColors_p, (count * index) / 2 - hue); // заливка по палитре радуга
         count++;
+      }
+      if (EMPTY_BRIGHT > 0) {
+        for (int i = ((MAX_CH - 1) - Rlenght); i > 0; i--)
+          leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
+        for (int i = MAX_CH + Llenght; i < NUM_LEDS; i++)
+          leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
       }
       break;
     case 2:
@@ -613,7 +624,7 @@ void remoteTick() {
       case BUTT_LEFT:
         if (settings_mode) {
           // ВЛЕВО общие настройки
-          BRIGHTNESS -= 10;
+          BRIGHTNESS -= 20;
           BRIGHTNESS = constrain(BRIGHTNESS, 0, 255);
           FastLED.setBrightness(BRIGHTNESS);
         } else {
@@ -637,7 +648,7 @@ void remoteTick() {
       case BUTT_RIGHT:
         if (settings_mode) {
           // ВПРАВО общие настройки
-          BRIGHTNESS += 10;
+          BRIGHTNESS += 20;
           BRIGHTNESS = constrain(BRIGHTNESS, 0, 255);
           FastLED.setBrightness(BRIGHTNESS);
         } else {
