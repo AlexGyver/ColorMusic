@@ -65,6 +65,9 @@
       Стрелки ← →: скорость
       Стрелки ↑ ↓: чувствительность
       Подрежимы #: 3 частоты / низкие / средние / высокие
+     9 - Анализатор спектра
+      Стрелки ← →: шаг цвета
+      Стрелки ↑ ↓: цвет
    **************************************************
    Разработано: AlexGyver
    Страница проекта: http://alexgyver.ru/colormusic/
@@ -134,6 +137,11 @@ int LIGHT_SAT = 200;              // начальная насыщенность
 // режим бегущих частот
 int RUNNING_SPEED = 60;
 
+// режим анализатора спектра
+int HUE_START = 0;
+int HUE_STEP = 5;
+#define LIGHT_SMOOTH 2
+
 /*
   Цвета для HSV
   HUE_RED
@@ -168,7 +176,7 @@ int RUNNING_SPEED = 60;
 // ----- КНОПКИ ПУЛЬТА -----
 
 // ------------------------------ ДЛЯ РАЗРАБОТЧИКОВ --------------------------------
-#define MODE_AMOUNT 8      // количество режимов
+#define MODE_AMOUNT 9      // количество режимов
 
 // цвета (устаревшие)
 #define BLUE     0x0000FF
@@ -181,6 +189,7 @@ int RUNNING_SPEED = 60;
 #define BLACK    0x000000
 
 #define STRIPE NUM_LEDS / 5
+float freq_to_stripe = NUM_LEDS / 40; // /2 так как симметрия, и /20 так как 20 частот
 
 #define FHT_N 64         // ширина спектра х2
 #define LOG_OUT 1
@@ -218,7 +227,7 @@ int maxLevel = 100;
 byte MAX_CH = NUM_LEDS / 2;
 int hue;
 unsigned long main_timer, hue_timer, strobe_timer, running_timer;
-float averK = 0.006, k = SMOOTH, k_freq = SMOOTH_FREQ;
+float averK = 0.006;
 byte count;
 float index = (float)255 / MAX_CH;   // коэффициент перевода для палитры
 boolean lowFlag;
@@ -233,6 +242,9 @@ unsigned int light_time = STROBE_PERIOD * STROBE_DUTY / 100;
 volatile boolean ir_flag;
 boolean settings_mode, ONstate = true;
 int8_t freq_strobe_mode;
+int freq_max;
+float freq_max_f;
+int freq_f[32];
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -313,8 +325,8 @@ void mainLoop() {
         if (!MONO)LsoundLevel = pow(LsoundLevel, EXP);
 
         // фильтр
-        RsoundLevel_f = RsoundLevel * k + RsoundLevel_f * (1 - k);
-        if (!MONO)LsoundLevel_f = LsoundLevel * k + LsoundLevel_f * (1 - k);
+        RsoundLevel_f = RsoundLevel * SMOOTH + RsoundLevel_f * (1 - SMOOTH);
+        if (!MONO)LsoundLevel_f = LsoundLevel * SMOOTH + LsoundLevel_f * (1 - SMOOTH);
 
         if (MONO) LsoundLevel_f = RsoundLevel_f;  // если моно, то левый = правому
 
@@ -341,32 +353,39 @@ void mainLoop() {
       }
 
       // 3-5 режим - цветомузыка
-      if (this_mode == 2 || this_mode == 3 || this_mode == 4 || this_mode == 7) {
+      if (this_mode == 2 || this_mode == 3 || this_mode == 4 || this_mode == 7 || this_mode == 8) {
         analyzeAudio();
         colorMusic[0] = 0;
         colorMusic[1] = 0;
         colorMusic[2] = 0;
+        for (int i = 0 ; i < 32 ; i++) {
+          if (fht_log_out[i] < SPEKTR_LOW_PASS) fht_log_out[i] = 0;
+        }
         // низкие частоты, выборка со 2 по 5 тон (0 и 1 зашумленные!)
         for (byte i = 2; i < 6; i++) {
-          if (fht_log_out[i] > SPEKTR_LOW_PASS) {
-            if (fht_log_out[i] > colorMusic[0]) colorMusic[0] = fht_log_out[i];
-          }
+          if (fht_log_out[i] > colorMusic[0]) colorMusic[0] = fht_log_out[i];
         }
         // средние частоты, выборка с 6 по 10 тон
         for (byte i = 6; i < 11; i++) {
-          if (fht_log_out[i] > SPEKTR_LOW_PASS) {
-            if (fht_log_out[i] > colorMusic[1]) colorMusic[1] = fht_log_out[i];
-          }
+          if (fht_log_out[i] > colorMusic[1]) colorMusic[1] = fht_log_out[i];
         }
-        // высокие частоты, выборка с 11 по 30 тон
-        for (byte i = 11; i < 31; i++) {
-          if (fht_log_out[i] > SPEKTR_LOW_PASS) {
-            if (fht_log_out[i] > colorMusic[2]) colorMusic[2] = fht_log_out[i];
-          }
+        // высокие частоты, выборка с 11 по 31 тон
+        for (byte i = 11; i < 32; i++) {
+          if (fht_log_out[i] > colorMusic[2]) colorMusic[2] = fht_log_out[i];
         }
+        freq_max = 0;
+        for (byte i = 0; i < 30; i++) {
+          if (fht_log_out[i + 2] > freq_max) freq_max = fht_log_out[i + 2];
+          if (freq_max < 5) freq_max = 5;
+
+          if (freq_f[i] < fht_log_out[i + 2]) freq_f[i] = fht_log_out[i + 2];
+          if (freq_f[i] > 0) freq_f[i] -= LIGHT_SMOOTH;
+          else freq_f[i] = 0;
+        }
+        freq_max_f = freq_max * averK + freq_max_f * (1 - averK);
         for (byte i = 0; i < 3; i++) {
           colorMusic_aver[i] = colorMusic[i] * averK + colorMusic_aver[i] * (1 - averK);  // общая фильтрация
-          colorMusic_f[i] = colorMusic[i] * k_freq + colorMusic_f[i] * (1 - k_freq);      // локальная
+          colorMusic_f[i] = colorMusic[i] * SMOOTH_FREQ + colorMusic_f[i] * (1 - SMOOTH_FREQ);      // локальная
           if (colorMusic_f[i] > ((float)colorMusic_aver[i] * MAX_COEF_FREQ)) {
             thisBright[i] = 255;
             colorMusicFlash[i] = 1;
@@ -528,6 +547,17 @@ void animation() {
         }
       }
       break;
+    case 8:
+      byte HUEindex = HUE_START;
+      for (byte i = 0; i < NUM_LEDS / 2; i++) {
+        byte this_bright = map(freq_f[(int)floor((NUM_LEDS / 2 - i) / freq_to_stripe)], 0, freq_max_f, 0, 255);
+        this_bright = constrain(this_bright, 0, 255);
+        leds[i] = CHSV(HUEindex, 255, this_bright);
+        leds[NUM_LEDS - i - 1] = leds[i];
+        HUEindex += HUE_STEP;
+        if (HUEindex > 255) HUEindex = 0;
+      }
+      break;
   }
 }
 
@@ -564,13 +594,15 @@ void remoteTick() {
         break;
       case BUTT_8: this_mode = 7;
         break;
+      case BUTT_9: this_mode = 8;
+        break;
       case BUTT_0: fullLowPass();
         break;
       case BUTT_STAR: ONstate = !ONstate; FastLED.clear(); FastLED.show();
         break;
       case BUTT_HASH:
         switch (this_mode) {
-          case 5:
+          case 4:
           case 7: if (++freq_strobe_mode > 3) freq_strobe_mode = 0;
             break;
         }
@@ -596,6 +628,8 @@ void remoteTick() {
               break;
             case 7: MAX_COEF_FREQ += 0.1;
               break;
+            case 8: HUE_START += 10; HUE_START = constrain(HUE_START, 0, 255);
+              break;
           }
         }
         break;
@@ -617,6 +651,8 @@ void remoteTick() {
             case 6: LIGHT_SAT -= 20; if (LIGHT_SAT < 0) LIGHT_SAT = 0;
               break;
             case 7: MAX_COEF_FREQ -= 0.1; if (MAX_COEF_FREQ < 0) MAX_COEF_FREQ = 0;
+              break;
+            case 8: HUE_START -= 10; HUE_START = constrain(HUE_START, 0, 255);
               break;
           }
         }
@@ -642,6 +678,8 @@ void remoteTick() {
               break;
             case 7: RUNNING_SPEED -= 10; if (RUNNING_SPEED < 1) RUNNING_SPEED = 1;
               break;
+            case 8: HUE_STEP -= 1; if (HUE_STEP < 1) HUE_STEP = 1;
+              break;
           }
         }
         break;
@@ -665,6 +703,8 @@ void remoteTick() {
             case 6: LIGHT_COLOR += 10; if (LIGHT_COLOR > 250) LIGHT_COLOR = 250;
               break;
             case 7: RUNNING_SPEED += 10;
+              break;
+            case 8: HUE_STEP += 1;
               break;
           }
         }
