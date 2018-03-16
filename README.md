@@ -63,6 +63,7 @@
 * Адаптер питания 5.5х2.1 http://ali.ski/UWjFu
 * Аудио гнездо http://ali.ski/OBCRvl
 * Разветвитель наушников http://ali.ski/LuAcL  http://ali.ski/gjhGIB
+* ИК пульт (для версии 2.0 WAVGAT) http://ali.ski/jIgy6d
 * Звук через микрофон
 	+ Микрофон модуль http://ali.pub/2cd5qr  http://ali.pub/2cd5th  http://ali.pub/2cd5un
 * Звук по FM радио
