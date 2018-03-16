@@ -11,15 +11,17 @@
     - Светомузыка по частотам: 3 полосы
     - Светомузыка по частотам: 1 полоса
     - Стробоскоп
-    - (НОВОЕ) Подсветка
-    - (НОВОЕ) Бегущие частоты
+    - (2.0) Подсветка
+    - (2.0) Бегущие частоты
+    - (2.1) анализатор спектра
    Особенности:
     - Плавная анимация (можно настроить)
     - Автонастройка по громкости (можно настроить)
     - Фильтр нижнего шума (можно настроить)
     - Автокалибровка шума при запуске (можно настроить)
     - Поддержка стерео и моно звука (можно настроить)
-    - (НОВОЕ) в режиме частот лента не гаснет полностью (EMPTY_BRIGHT)
+    - (2.0) в режиме частот лента не гаснет полностью (EMPTY_BRIGHT)
+    - (2.1) все настройки сохраняются в памяти и не сбрасываются при перезагрузке
 
    НАСТРОЙКА НИЖНЕГО ПОРОГА ШУМА (строки 65-71)
     - Ручная: выключаем AUTO_LOW_PASS и EEPROM_LOW_PASS, настраиваем LOW_PASS и SPEKTR_LOW_PASS вручную
@@ -56,18 +58,20 @@
        Стрелки ↑ ↓: чувствительность
       Подрежимы #: 3 частоты / низкие / средние / высокие
      6 - Стробоскоп
-      Стрелки ← →: плавность вспышек
+       Стрелки ← →: плавность вспышек
        Стрелки ↑ ↓: частота вспышек
      7 - Цветная подсветка
-       Стрелки ← →: цвет
-      Стрелки ↑ ↓: насыщенность
+       Подрежимы #:
+        Постоянный: стрелки ← →: цвет, стрелки ↑ ↓: насыщенность
+        Плавная смена: стрелки ← →: скорость, стрелки ↑ ↓: насыщенность
+        Бегущая радуга: стрелки ← →: скорость, стрелки ↑ ↓: шаг радуги
      8 - “Бегущие частоты”
-      Стрелки ← →: скорость
-      Стрелки ↑ ↓: чувствительность
-      Подрежимы #: 3 частоты / низкие / средние / высокие
+       Стрелки ← →: скорость
+       Стрелки ↑ ↓: чувствительность
+       Подрежимы #: 3 частоты / низкие / средние / высокие
      9 - Анализатор спектра
-      Стрелки ← →: шаг цвета
-      Стрелки ↑ ↓: цвет
+       Стрелки ← →: шаг цвета
+       Стрелки ↑ ↓: цвет
    **************************************************
    Разработано: AlexGyver
    Страница проекта: http://alexgyver.ru/colormusic/
@@ -75,6 +79,7 @@
 */
 
 // --------------------------- НАСТРОЙКИ ---------------------------
+#define KEEP_SETTINGS 1    // хранить ВСЕ натсройки в памяти
 // лента
 #define NUM_LEDS 60        // количество светодиодов
 int BRIGHTNESS = 200;      // яркость (0 - 255)
@@ -133,6 +138,9 @@ int STROBE_SMOOTH = 100;          // скорость нарастания/уг�
 // режим подсветки
 int LIGHT_COLOR = 0;              // начальный цвет подсветки
 int LIGHT_SAT = 200;              // начальная насыщенность подсветки
+int COLOR_SPEED = 100;
+int RAINBOW_PERIOD = 3;
+float RAINBOW_STEP_2 = 5.5;
 
 // режим бегущих частот
 int RUNNING_SPEED = 60;
@@ -155,25 +163,25 @@ int HUE_STEP = 5;
 */
 // --------------------------- НАСТРОЙКИ ---------------------------
 
-// ----- КНОПКИ ПУЛЬТА -----
-#define BUTT_UP     0xFF629D
-#define BUTT_DOWN   0xFFA857
-#define BUTT_LEFT   0xFF22DD
-#define BUTT_RIGHT  0xFFC23D
-#define BUTT_OK     0xFF02FD
-#define BUTT_1      0xFF6897
-#define BUTT_2      0xFF9867
-#define BUTT_3      0xFFB04F
-#define BUTT_4      0xFF30CF
-#define BUTT_5      0xFF18E7
-#define BUTT_6      0xFF7A85
-#define BUTT_7      0xFF10EF
-#define BUTT_8      0xFF38C7
-#define BUTT_9      0xFF5AA5
-#define BUTT_0      0xFF4AB5
-#define BUTT_STAR   0xFF42BD
-#define BUTT_HASH   0xFF52AD
-// ----- КНОПКИ ПУЛЬТА -----
+// —-— КНОПКИ ПУЛЬТА —-—
+#define BUTT_UP 	0xFF18E7
+#define BUTT_DOWN 	0xFF4AB5
+#define BUTT_LEFT 	0xFF10EF
+#define BUTT_RIGHT  0xFF5AA5
+#define BUTT_OK 	0xFF38C7
+#define BUTT_1 		0xFFA25D
+#define BUTT_2 		0xFF629D
+#define BUTT_3 		0xFFE21D
+#define BUTT_4 		0xFF22DD
+#define BUTT_5 		0xFF02FD
+#define BUTT_6 		0xFFC23D
+#define BUTT_7 		0xFFE01F
+#define BUTT_8 		0xFFA857
+#define BUTT_9 		0xFF906F
+#define BUTT_0 		0xFF9867
+#define BUTT_STAR 	0xFF6897
+#define BUTT_HASH 	0xFFB04F
+// —-— КНОПКИ ПУЛЬТА —---
 
 // ------------------------------ ДЛЯ РАЗРАБОТЧИКОВ --------------------------------
 #define MODE_AMOUNT 9      // количество режимов
@@ -226,7 +234,7 @@ float averageLevel = 50;
 int maxLevel = 100;
 byte MAX_CH = NUM_LEDS / 2;
 int hue;
-unsigned long main_timer, hue_timer, strobe_timer, running_timer;
+unsigned long main_timer, hue_timer, strobe_timer, running_timer, color_timer, rainbow_timer;
 float averK = 0.006;
 byte count;
 float index = (float)255 / MAX_CH;   // коэффициент перевода для палитры
@@ -241,10 +249,11 @@ int thisBright[3], strobe_bright = 0;
 unsigned int light_time = STROBE_PERIOD * STROBE_DUTY / 100;
 volatile boolean ir_flag;
 boolean settings_mode, ONstate = true;
-int8_t freq_strobe_mode;
+int8_t freq_strobe_mode, light_mode;
 int freq_max;
-float freq_max_f;
+float freq_max_f, rainbow_steps;
 int freq_f[32];
+uint16_t this_color;
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -282,8 +291,17 @@ void setup() {
     autoLowPass();
   }
   if (EEPROM_LOW_PASS) {                // восстановить значения шумов из памяти
-    LOW_PASS = EEPROM.readInt(0);
-    SPEKTR_LOW_PASS = EEPROM.readInt(2);
+    LOW_PASS = EEPROM.readInt(60);
+    SPEKTR_LOW_PASS = EEPROM.readInt(62);
+  }
+
+  // в 100 ячейке хранится число 100. Если нет - значит это первый запуск системы
+  if (EEPROM.read(100) != 100) {
+    Serial.println(F("First start"));
+    EEPROM.write(100, 100);
+    updateEEPROM();
+  } else {
+    readEEPROM();
   }
 }
 
@@ -515,7 +533,31 @@ void animation() {
     case 5:
       for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(STROBE_COLOR, STROBE_SAT, strobe_bright);
       break;
-    case 6: for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(LIGHT_COLOR, LIGHT_SAT, 255);
+    case 6:
+      switch (light_mode) {
+        case 0: for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(LIGHT_COLOR, LIGHT_SAT, 255);
+          break;
+        case 1:
+          if (millis() - color_timer > COLOR_SPEED) {
+            color_timer = millis();
+            if (++this_color > 255) this_color = 0;
+          }
+          for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(this_color, LIGHT_SAT, 255);
+          break;
+        case 2:
+          if (millis() - rainbow_timer > 30) {
+            rainbow_timer = millis();
+            this_color += RAINBOW_PERIOD;
+            if (this_color > 255) this_color = 0;
+          }
+          rainbow_steps = this_color;
+          for (int i = 0; i < NUM_LEDS; i++) {
+            leds[i] = CHSV((int)floor(rainbow_steps), 255, 255);
+            rainbow_steps += RAINBOW_STEP_2;
+            if (rainbow_steps > 255) rainbow_steps = 0;
+          }
+          break;
+      }
       break;
     case 7:
       switch (freq_strobe_mode) {
@@ -574,6 +616,21 @@ void SILENCE() {
   for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);;
 }
 
+// вспомогательная функция, изменяет величину value на шаг incr в пределах minimum.. maximum
+int smartIncr(int value, int incr_step, int mininmum, int maximum) {
+  int val_buf = value + incr_step;
+  val_buf = constrain(val_buf, mininmum, maximum);
+  //Serial.println(val_buf);
+  return val_buf;
+}
+
+float smartIncrFloat(float value, float incr_step, float mininmum, float maximum) {
+  float val_buf = value + incr_step;
+  val_buf = constrain(val_buf, mininmum, maximum);
+  //Serial.println(val_buf);
+  return val_buf;
+}
+
 void remoteTick() {
   if (ir_flag) { // если данные пришли
     switch (results.value) {
@@ -598,12 +655,14 @@ void remoteTick() {
         break;
       case BUTT_0: fullLowPass();
         break;
-      case BUTT_STAR: ONstate = !ONstate; FastLED.clear(); FastLED.show();
+      case BUTT_STAR: ONstate = !ONstate; FastLED.clear(); FastLED.show(); updateEEPROM();
         break;
       case BUTT_HASH:
         switch (this_mode) {
           case 4:
           case 7: if (++freq_strobe_mode > 3) freq_strobe_mode = 0;
+            break;
+          case 6: if (++light_mode > 2) light_mode = 0;
             break;
         }
         break;
@@ -616,19 +675,27 @@ void remoteTick() {
           switch (this_mode) {
             case 0:
               break;
-            case 1: RAINBOW_SPEED += 1;
+            case 1: RAINBOW_SPEED = smartIncr(RAINBOW_SPEED, 1, 1, 100);
               break;
             case 2:
             case 3:
-            case 4: MAX_COEF_FREQ += 0.1;
+            case 4: MAX_COEF_FREQ = smartIncrFloat(MAX_COEF_FREQ, 0.1, 0, 5);
               break;
-            case 5: STROBE_PERIOD += 20;
+            case 5: STROBE_PERIOD = smartIncr(STROBE_PERIOD, 20, 1, 1000);
               break;
-            case 6: LIGHT_SAT += 20; if (LIGHT_SAT > 250) LIGHT_SAT = 250;
+            case 6:
+              switch (light_mode) {
+                case 0: LIGHT_SAT = smartIncr(LIGHT_SAT, 20, 0, 255);
+                  break;
+                case 1: LIGHT_SAT = smartIncr(LIGHT_SAT, 20, 0, 255);
+                  break;
+                case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, 0.5, 0.1, 50);
+                  break;
+              }
               break;
-            case 7: MAX_COEF_FREQ += 0.1;
+            case 7: MAX_COEF_FREQ = smartIncrFloat(MAX_COEF_FREQ, 0.1, 0.0, 10);
               break;
-            case 8: HUE_START += 10; HUE_START = constrain(HUE_START, 0, 255);
+            case 8: HUE_START = smartIncr(HUE_START, 10, 0, 255);
               break;
           }
         }
@@ -640,19 +707,27 @@ void remoteTick() {
           switch (this_mode) {
             case 0:
               break;
-            case 1: RAINBOW_SPEED -= 1; if (RAINBOW_SPEED < 1) RAINBOW_SPEED = 1;
+            case 1: RAINBOW_SPEED = smartIncr(RAINBOW_SPEED, -1, 1, 100);
               break;
             case 2:
             case 3:
-            case 4: MAX_COEF_FREQ -= 0.1; if (MAX_COEF_FREQ < 0) MAX_COEF_FREQ = 0;
+            case 4: MAX_COEF_FREQ = smartIncrFloat(MAX_COEF_FREQ, -0.1, 0, 5);
               break;
-            case 5: STROBE_PERIOD -= 20; if (STROBE_PERIOD < 0) STROBE_PERIOD = 0;
+            case 5: STROBE_PERIOD = smartIncr(STROBE_PERIOD, -20, 1, 1000);
               break;
-            case 6: LIGHT_SAT -= 20; if (LIGHT_SAT < 0) LIGHT_SAT = 0;
+            case 6:
+              switch (light_mode) {
+                case 0: LIGHT_SAT = smartIncr(LIGHT_SAT, -20, 0, 255);
+                  break;
+                case 1: LIGHT_SAT = smartIncr(LIGHT_SAT, -20, 0, 255);
+                  break;
+                case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, -0.5, 0.1, 50);
+                  break;
+              }
               break;
-            case 7: MAX_COEF_FREQ -= 0.1; if (MAX_COEF_FREQ < 0) MAX_COEF_FREQ = 0;
+            case 7: MAX_COEF_FREQ = smartIncrFloat(MAX_COEF_FREQ, -0.1, 0.0, 10);
               break;
-            case 8: HUE_START -= 10; HUE_START = constrain(HUE_START, 0, 255);
+            case 8: HUE_START = smartIncr(HUE_START, -10, 0, 255);
               break;
           }
         }
@@ -660,25 +735,32 @@ void remoteTick() {
       case BUTT_LEFT:
         if (settings_mode) {
           // ВЛЕВО общие настройки
-          BRIGHTNESS -= 20;
-          BRIGHTNESS = constrain(BRIGHTNESS, 0, 255);
+          BRIGHTNESS = smartIncr(BRIGHTNESS, -20, 0, 255);
           FastLED.setBrightness(BRIGHTNESS);
         } else {
           switch (this_mode) {
             case 0:
-            case 1: SMOOTH -= 0.02; if (SMOOTH < 0.01) SMOOTH = 0.01;
+            case 1: SMOOTH = smartIncrFloat(SMOOTH, -0.02, 0.01, 1);
               break;
             case 2:
             case 3:
-            case 4: SMOOTH_FREQ -= 0.05; if (SMOOTH_FREQ < 0) SMOOTH_FREQ = 0;
+            case 4: SMOOTH_FREQ = smartIncrFloat(SMOOTH_FREQ, -0.05, 0.05, 1);
               break;
-            case 5: STROBE_SMOOTH -= 20; if (STROBE_SMOOTH < 0) STROBE_SMOOTH = 0;
+            case 5: STROBE_SMOOTH = smartIncr(STROBE_SMOOTH, -20, 0, 255);
               break;
-            case 6: LIGHT_COLOR -= 10; if (LIGHT_COLOR < 0) LIGHT_COLOR = 0;
+            case 6:
+              switch (light_mode) {
+                case 0: LIGHT_COLOR = smartIncr(LIGHT_COLOR, -10, 0, 255);
+                  break;
+                case 1: COLOR_SPEED = smartIncr(COLOR_SPEED, -10, 0, 255);
+                  break;
+                case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, -1, 1, 50);
+                  break;
+              }
               break;
-            case 7: RUNNING_SPEED -= 10; if (RUNNING_SPEED < 1) RUNNING_SPEED = 1;
+            case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, -10, 1, 300);
               break;
-            case 8: HUE_STEP -= 1; if (HUE_STEP < 1) HUE_STEP = 1;
+            case 8: HUE_STEP = smartIncr(HUE_STEP, -1, 1, 255);
               break;
           }
         }
@@ -686,25 +768,32 @@ void remoteTick() {
       case BUTT_RIGHT:
         if (settings_mode) {
           // ВПРАВО общие настройки
-          BRIGHTNESS += 20;
-          BRIGHTNESS = constrain(BRIGHTNESS, 0, 255);
+          BRIGHTNESS = smartIncr(BRIGHTNESS, 20, 0, 255);
           FastLED.setBrightness(BRIGHTNESS);
         } else {
           switch (this_mode) {
             case 0:
-            case 1: SMOOTH += 0.02;
+            case 1: SMOOTH = smartIncrFloat(SMOOTH, 0.02, 0.01, 1);
               break;
             case 2:
             case 3:
-            case 4: SMOOTH_FREQ += 0.05;
+            case 4: SMOOTH_FREQ = smartIncrFloat(SMOOTH_FREQ, 0.05, 0.05, 1);
               break;
-            case 5: STROBE_SMOOTH += 20;
+            case 5: STROBE_SMOOTH = smartIncr(STROBE_SMOOTH, 20, 0, 255);
               break;
-            case 6: LIGHT_COLOR += 10; if (LIGHT_COLOR > 250) LIGHT_COLOR = 250;
+            case 6:
+              switch (light_mode) {
+                case 0: LIGHT_COLOR = smartIncr(LIGHT_COLOR, 10, 0, 255);
+                  break;
+                case 1: COLOR_SPEED = smartIncr(COLOR_SPEED, 10, 0, 255);
+                  break;
+                case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, 1, 1, 50);
+                  break;
+              }
               break;
-            case 7: RUNNING_SPEED += 10;
+            case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, 10, 1, 300);
               break;
-            case 8: HUE_STEP += 1;
+            case 8: HUE_STEP = smartIncr(HUE_STEP, 1, 1, 255);
               break;
           }
         }
@@ -748,8 +837,8 @@ void autoLowPass() {
   SPEKTR_LOW_PASS = thisMax + LOW_PASS_FREQ_ADD;  // нижний порог как максимум тишины
 
   if (EEPROM_LOW_PASS && !AUTO_LOW_PASS) {
-    EEPROM.updateInt(0, LOW_PASS);
-    EEPROM.updateInt(2, SPEKTR_LOW_PASS);
+    EEPROM.updateInt(60, LOW_PASS);
+    EEPROM.updateInt(62, SPEKTR_LOW_PASS);
   }
 }
 
@@ -783,6 +872,44 @@ void fullLowPass() {
   delay(500);               // подождать
   FastLED.setBrightness(BRIGHTNESS);  // вернуть яркость
   digitalWrite(13, LOW);    // выключить светодиод
+}
+void updateEEPROM() {
+  EEPROM.updateByte(1, this_mode);
+  EEPROM.updateByte(2, freq_strobe_mode);
+  EEPROM.updateByte(3, light_mode);
+  EEPROM.updateInt(4, RAINBOW_SPEED);
+  EEPROM.updateFloat(8, MAX_COEF_FREQ);
+  EEPROM.updateInt(12, STROBE_PERIOD);
+  EEPROM.updateInt(16, LIGHT_SAT);
+  EEPROM.updateFloat(20, RAINBOW_STEP_2);
+  EEPROM.updateInt(24, HUE_START);
+  EEPROM.updateFloat(28, SMOOTH);
+  EEPROM.updateFloat(32, SMOOTH_FREQ);
+  EEPROM.updateInt(36, STROBE_SMOOTH);
+  EEPROM.updateInt(40, LIGHT_COLOR);
+  EEPROM.updateInt(44, COLOR_SPEED);
+  EEPROM.updateInt(48, RAINBOW_PERIOD);
+  EEPROM.updateInt(52, RUNNING_SPEED);
+  EEPROM.updateInt(56, HUE_STEP);
+}
+void readEEPROM() {
+  this_mode = EEPROM.readByte(1);
+  freq_strobe_mode = EEPROM.readByte(2);
+  light_mode = EEPROM.readByte(3);
+  RAINBOW_SPEED = EEPROM.readInt(4);
+  MAX_COEF_FREQ = EEPROM.readFloat(8);
+  STROBE_PERIOD = EEPROM.readInt(12);
+  LIGHT_SAT = EEPROM.readInt(16);
+  RAINBOW_STEP_2 = EEPROM.readFloat(20);
+  HUE_START = EEPROM.readInt(24);
+  SMOOTH = EEPROM.readFloat(28);
+  SMOOTH_FREQ = EEPROM.readFloat(32);
+  STROBE_SMOOTH = EEPROM.readInt(36);
+  LIGHT_COLOR = EEPROM.readInt(40);
+  COLOR_SPEED = EEPROM.readInt(44);
+  RAINBOW_PERIOD = EEPROM.readInt(48);
+  RUNNING_SPEED = EEPROM.readInt(52);
+  HUE_STEP = EEPROM.readInt(56);
 }
 void rainbowTick() {
   // кольцевое изменение положения радуги по таймеру
