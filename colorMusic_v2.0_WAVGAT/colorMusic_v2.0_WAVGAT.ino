@@ -148,25 +148,25 @@ int RUNNING_SPEED = 60;
 */
 // --------------------------- НАСТРОЙКИ ---------------------------
 
-// ----- КНОПКИ ПУЛЬТА -----
-#define BUTT_UP     0xFF629D
-#define BUTT_DOWN   0xFFA857
-#define BUTT_LEFT   0xFF22DD
-#define BUTT_RIGHT  0xFFC23D
-#define BUTT_OK     0xFF02FD
-#define BUTT_1      0xFF6897
-#define BUTT_2      0xFF9867
-#define BUTT_3      0xFFB04F
-#define BUTT_4      0xFF30CF
-#define BUTT_5      0xFF18E7
-#define BUTT_6      0xFF7A85
-#define BUTT_7      0xFF10EF
-#define BUTT_8      0xFF38C7
-#define BUTT_9      0xFF5AA5
-#define BUTT_0      0xFF4AB5
-#define BUTT_STAR   0xFF42BD
-#define BUTT_HASH   0xFF52AD
-// ----- КНОПКИ ПУЛЬТА -----
+// —-— КНОПКИ ПУЛЬТА —-—
+#define BUTT_UP 	FF18E7
+#define BUTT_DOWN 	FF4AB5
+#define BUTT_LEFT 	FF10EF
+#define BUTT_RIGHT  FF5AA5
+#define BUTT_OK 	FF38C7
+#define BUTT_1 		FFA25D
+#define BUTT_2 		FF629D
+#define BUTT_3 		FFE21D
+#define BUTT_4 		FF22DD
+#define BUTT_5 		FF02FD
+#define BUTT_6 		FFC23D
+#define BUTT_7 		FFE01F
+#define BUTT_8 		FFA857
+#define BUTT_9 		FF906F
+#define BUTT_0 		FF9867
+#define BUTT_STAR 	FF6897
+#define BUTT_HASH 	FFB04F
+// —-— КНОПКИ ПУЛЬТА —---
 
 // ------------------------------ ДЛЯ РАЗРАБОТЧИКОВ --------------------------------
 #define MODE_AMOUNT 7      // количество режимов
