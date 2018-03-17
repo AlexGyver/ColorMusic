@@ -22,6 +22,8 @@
     - Поддержка стерео и моно звука (можно настроить)
     - (2.0) в режиме частот лента не гаснет полностью (EMPTY_BRIGHT)
     - (2.1) все настройки сохраняются в памяти и не сбрасываются при перезагрузке
+      - Сохранение настроек происходит при выключении кнопкой звёздочка (*)
+      - А также через 30 секунд после последнего нажатия на любую кнопку ИК пульта
 
    НАСТРОЙКА НИЖНЕГО ПОРОГА ШУМА (строки 65-71)
     - Ручная: выключаем AUTO_LOW_PASS и EEPROM_LOW_PASS, настраиваем LOW_PASS и SPEKTR_LOW_PASS вручную
@@ -40,7 +42,8 @@
     - Кнопка ОК: переключение между локальными и глобальными настройками)
     - Решётка (#): смена подрежима
     - Глобальные настройки (горит светодиод на плате):
-      + Влево/вправо: яркость
+      + Стрелки ← →: общая яркость горящих светодиодов
+      + Стрелки ↑ ↓: яркость "не горящих" светодиодов
     - Локальные настройки (у каждого режима свои):
      1 - Шкала громкости (градиент)
       Стрелки ← →: плавность анимации
@@ -82,7 +85,7 @@
 #define KEEP_SETTINGS 1    // хранить ВСЕ натсройки в памяти
 // лента
 #define NUM_LEDS 60        // количество светодиодов
-int BRIGHTNESS = 200;      // яркость (0 - 255)
+byte BRIGHTNESS = 200;      // яркость (0 - 255)
 
 // пины
 #define SOUND_R A2         // аналоговый пин вход аудио, правый канал
@@ -94,7 +97,7 @@ int BRIGHTNESS = 200;      // яркость (0 - 255)
 #define IR_PIN 2           // ИК приёмник
 
 // настройки радуги
-int RAINBOW_SPEED = 6;     // скорость движения радуги (чем меньше число, тем быстрее радуга)
+byte RAINBOW_SPEED = 6;     // скорость движения радуги (чем меньше число, тем быстрее радуга)
 #define RAINBOW_STEP 6     // шаг изменения цвета радуги
 
 // отрисовка
@@ -105,12 +108,12 @@ int RAINBOW_SPEED = 6;     // скорость движения радуги (ч
 #define MONO 1              // 1 - только один канал (ПРАВЫЙ!!!!! SOUND_R!!!!!), 0 - два канала
 #define EXP 1.4             // степень усиления сигнала (для более "резкой" работы) (по умолчанию 1.4)
 #define POTENT 1            // 1 - используем потенциометр, 0 - используется внутренний источник опорного напряжения 1.1 В
-#define EMPTY_BRIGHT 30           // яркость "не горящих" светодиодов (0 - 255)
-#define EMPTY_COLOR HUE_PURPLE    // цвет "не горящих" светодиодов. Будет чёрный, если яркость 0
+byte EMPTY_BRIGHT = 30;           // яркость "не горящих" светодиодов (0 - 255)
+#define EMPTY_COLOR HUE_PURPLE   // цвет "не горящих" светодиодов. Будет чёрный, если яркость 0
 
 // нижний порог шумов
-int LOW_PASS = 100;         // нижний порог шумов режим VU, ручная настройка
-int SPEKTR_LOW_PASS = 40;   // нижний порог шумов режим спектра, ручная настройка
+byte LOW_PASS = 100;         // нижний порог шумов режим VU, ручная настройка
+byte SPEKTR_LOW_PASS = 40;   // нижний порог шумов режим спектра, ручная настройка
 #define AUTO_LOW_PASS 0     // разрешить настройку нижнего порога шумов при запуске (по умолч. 0)
 #define EEPROM_LOW_PASS 1   // порог шумов хранится в энергонезависимой памяти (по умолч. 1)
 #define LOW_PASS_ADD 13     // "добавочная" величина к нижнему порогу, для надёжности (режим VU)
@@ -133,21 +136,21 @@ int STROBE_PERIOD = 100;          // период вспышек, миллисе
 #define STROBE_DUTY 20            // скважность вспышек (1 - 99) - отношение времени вспышки ко времени темноты
 #define STROBE_COLOR HUE_YELLOW   // цвет стробоскопа
 #define STROBE_SAT 0              // насыщенность. Если 0 - цвет будет БЕЛЫЙ при любом цвете (0 - 255)
-int STROBE_SMOOTH = 100;          // скорость нарастания/угасания вспышки (0 - 255)
+byte STROBE_SMOOTH = 100;          // скорость нарастания/угасания вспышки (0 - 255)
 
 // режим подсветки
-int LIGHT_COLOR = 0;              // начальный цвет подсветки
-int LIGHT_SAT = 200;              // начальная насыщенность подсветки
-int COLOR_SPEED = 100;
-int RAINBOW_PERIOD = 3;
+byte LIGHT_COLOR = 0;              // начальный цвет подсветки
+byte LIGHT_SAT = 200;              // начальная насыщенность подсветки
+byte COLOR_SPEED = 100;
+byte RAINBOW_PERIOD = 3;
 float RAINBOW_STEP_2 = 5.5;
 
 // режим бегущих частот
-int RUNNING_SPEED = 60;
+byte RUNNING_SPEED = 60;
 
 // режим анализатора спектра
-int HUE_START = 0;
-int HUE_STEP = 5;
+byte HUE_START = 0;
+byte HUE_STEP = 5;
 #define LIGHT_SMOOTH 2
 
 /*
@@ -234,7 +237,7 @@ float averageLevel = 50;
 int maxLevel = 100;
 byte MAX_CH = NUM_LEDS / 2;
 int hue;
-unsigned long main_timer, hue_timer, strobe_timer, running_timer, color_timer, rainbow_timer;
+unsigned long main_timer, hue_timer, strobe_timer, running_timer, color_timer, rainbow_timer, eeprom_timer;
 float averK = 0.006;
 byte count;
 float index = (float)255 / MAX_CH;   // коэффициент перевода для палитры
@@ -254,6 +257,7 @@ int freq_max;
 float freq_max_f, rainbow_steps;
 int freq_f[32];
 uint16_t this_color;
+boolean running_flag[3], eeprom_flag;
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -291,17 +295,19 @@ void setup() {
     autoLowPass();
   }
   if (EEPROM_LOW_PASS) {                // восстановить значения шумов из памяти
-    LOW_PASS = EEPROM.readInt(60);
-    SPEKTR_LOW_PASS = EEPROM.readInt(62);
+    LOW_PASS = EEPROM.readInt(70);
+    SPEKTR_LOW_PASS = EEPROM.readInt(72);
   }
 
   // в 100 ячейке хранится число 100. Если нет - значит это первый запуск системы
-  if (EEPROM.read(100) != 100) {
-    Serial.println(F("First start"));
-    EEPROM.write(100, 100);
-    updateEEPROM();
-  } else {
-    readEEPROM();
+  if (KEEP_SETTINGS) {
+    if (EEPROM.read(100) != 100) {
+      Serial.println(F("First start"));
+      EEPROM.write(100, 100);
+      updateEEPROM();
+    } else {
+      readEEPROM();
+    }
   }
 }
 
@@ -310,6 +316,7 @@ void loop() {
   remoteTick();     // опрос ИК пульта
   rainbowTick();    // пересчёт радуги
   mainLoop();       // главный цикл обработки и отрисовки
+  eepromTick();     // проверка не пора ли сохранить настройки
 }
 
 void mainLoop() {
@@ -347,6 +354,12 @@ void mainLoop() {
         if (!MONO)LsoundLevel_f = LsoundLevel * SMOOTH + LsoundLevel_f * (1 - SMOOTH);
 
         if (MONO) LsoundLevel_f = RsoundLevel_f;  // если моно, то левый = правому
+
+        // заливаем "подложку", если яркость достаточная
+        if (EMPTY_BRIGHT > 5) {
+          for (int i = 0; i < NUM_LEDS; i++)
+            leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
+        }
 
         // если значение выше порога - начинаем самое интересное
         if (RsoundLevel_f > 15 && LsoundLevel_f > 15) {
@@ -406,10 +419,14 @@ void mainLoop() {
           colorMusic_f[i] = colorMusic[i] * SMOOTH_FREQ + colorMusic_f[i] * (1 - SMOOTH_FREQ);      // локальная
           if (colorMusic_f[i] > ((float)colorMusic_aver[i] * MAX_COEF_FREQ)) {
             thisBright[i] = 255;
-            colorMusicFlash[i] = 1;
-          } else colorMusicFlash[i] = 0;
+            colorMusicFlash[i] = true;
+            running_flag[i] = true;
+          } else colorMusicFlash[i] = false;
           if (thisBright[i] >= 0) thisBright[i] -= SMOOTH_STEP;
-          if (thisBright[i] < EMPTY_BRIGHT) thisBright[i] = EMPTY_BRIGHT;
+          if (thisBright[i] < EMPTY_BRIGHT) {
+            thisBright[i] = EMPTY_BRIGHT;
+            running_flag[i] = false;
+          }
         }
         animation();
       }
@@ -531,7 +548,10 @@ void animation() {
       }
       break;
     case 5:
-      for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(STROBE_COLOR, STROBE_SAT, strobe_bright);
+      if (strobe_bright > 0)
+        for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(STROBE_COLOR, STROBE_SAT, strobe_bright);
+      else
+        for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
       break;
     case 6:
       switch (light_mode) {
@@ -562,22 +582,22 @@ void animation() {
     case 7:
       switch (freq_strobe_mode) {
         case 0:
-          if (colorMusicFlash[2]) leds[NUM_LEDS / 2] = CHSV(HIGH_COLOR, 255, thisBright[2]);
-          else if (colorMusicFlash[1]) leds[NUM_LEDS / 2] = CHSV(MID_COLOR, 255, thisBright[1]);
-          else if (colorMusicFlash[0]) leds[NUM_LEDS / 2] = CHSV(LOW_COLOR, 255, thisBright[0]);
+          if (running_flag[2]) leds[NUM_LEDS / 2] = CHSV(HIGH_COLOR, 255, thisBright[2]);
+          else if (running_flag[1]) leds[NUM_LEDS / 2] = CHSV(MID_COLOR, 255, thisBright[1]);
+          else if (running_flag[0]) leds[NUM_LEDS / 2] = CHSV(LOW_COLOR, 255, thisBright[0]);
           else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
           break;
         case 1:
-          if (colorMusicFlash[2]) leds[NUM_LEDS / 2] = CHSV(HIGH_COLOR, 255, thisBright[2]);
-          else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);;
+          if (running_flag[2]) leds[NUM_LEDS / 2] = CHSV(HIGH_COLOR, 255, thisBright[2]);
+          else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
           break;
         case 2:
-          if (colorMusicFlash[1]) leds[NUM_LEDS / 2] = CHSV(MID_COLOR, 255, thisBright[1]);
-          else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);;
+          if (running_flag[1]) leds[NUM_LEDS / 2] = CHSV(MID_COLOR, 255, thisBright[1]);
+          else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
           break;
         case 3:
-          if (colorMusicFlash[0]) leds[NUM_LEDS / 2] = CHSV(LOW_COLOR, 255, thisBright[0]);
-          else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);;
+          if (running_flag[0]) leds[NUM_LEDS / 2] = CHSV(LOW_COLOR, 255, thisBright[0]);
+          else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
           break;
       }
       leds[(NUM_LEDS / 2) - 1] = leds[NUM_LEDS / 2];
@@ -613,7 +633,7 @@ void LOWS() {
   for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(LOW_COLOR, 255, thisBright[0]);
 }
 void SILENCE() {
-  for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);;
+  for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
 }
 
 // вспомогательная функция, изменяет величину value на шаг incr в пределах minimum.. maximum
@@ -633,6 +653,8 @@ float smartIncrFloat(float value, float incr_step, float mininmum, float maximum
 
 void remoteTick() {
   if (ir_flag) { // если данные пришли
+    eeprom_timer = millis();
+    eeprom_flag = true;
     switch (results.value) {
       // режимы
       case BUTT_1: this_mode = 0;
@@ -671,6 +693,7 @@ void remoteTick() {
       case BUTT_UP:
         if (settings_mode) {
           // ВВЕРХ общие настройки
+          EMPTY_BRIGHT = smartIncr(EMPTY_BRIGHT, 5, 0, 255);
         } else {
           switch (this_mode) {
             case 0:
@@ -703,6 +726,7 @@ void remoteTick() {
       case BUTT_DOWN:
         if (settings_mode) {
           // ВНИЗ общие настройки
+          EMPTY_BRIGHT = smartIncr(EMPTY_BRIGHT, -5, 0, 255);
         } else {
           switch (this_mode) {
             case 0:
@@ -758,7 +782,7 @@ void remoteTick() {
                   break;
               }
               break;
-            case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, -10, 1, 300);
+            case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, -10, 1, 255);
               break;
             case 8: HUE_STEP = smartIncr(HUE_STEP, -1, 1, 255);
               break;
@@ -791,12 +815,14 @@ void remoteTick() {
                   break;
               }
               break;
-            case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, 10, 1, 300);
+            case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, 10, 1, 255);
               break;
             case 8: HUE_STEP = smartIncr(HUE_STEP, 1, 1, 255);
               break;
           }
         }
+        break;
+      default: eeprom_flag = false;   // если не распознали кнопку, не обновляем настройки!
         break;
     }
     ir_flag = false;
@@ -837,8 +863,8 @@ void autoLowPass() {
   SPEKTR_LOW_PASS = thisMax + LOW_PASS_FREQ_ADD;  // нижний порог как максимум тишины
 
   if (EEPROM_LOW_PASS && !AUTO_LOW_PASS) {
-    EEPROM.updateInt(60, LOW_PASS);
-    EEPROM.updateInt(62, SPEKTR_LOW_PASS);
+    EEPROM.updateInt(70, LOW_PASS);
+    EEPROM.updateInt(72, SPEKTR_LOW_PASS);
   }
 }
 
@@ -891,6 +917,7 @@ void updateEEPROM() {
   EEPROM.updateInt(48, RAINBOW_PERIOD);
   EEPROM.updateInt(52, RUNNING_SPEED);
   EEPROM.updateInt(56, HUE_STEP);
+  EEPROM.updateInt(60, EMPTY_BRIGHT);
 }
 void readEEPROM() {
   this_mode = EEPROM.readByte(1);
@@ -910,7 +937,17 @@ void readEEPROM() {
   RAINBOW_PERIOD = EEPROM.readInt(48);
   RUNNING_SPEED = EEPROM.readInt(52);
   HUE_STEP = EEPROM.readInt(56);
+  EMPTY_BRIGHT = EEPROM.readInt(60);
 }
+void eepromTick() {
+  if (eeprom_flag)
+    if (millis() - eeprom_timer > 30000) {  // 30 секунд после последнего нажатия с пульта
+      eeprom_flag = false;
+      eeprom_timer = millis();
+      updateEEPROM();
+    }
+}
+
 void rainbowTick() {
   // кольцевое изменение положения радуги по таймеру
   if (millis() - hue_timer > RAINBOW_SPEED) {
