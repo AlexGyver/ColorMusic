@@ -26,13 +26,9 @@
       - А также через 30 секунд после последнего нажатия на любую кнопку ИК пульта
 
    НАСТРОЙКА НИЖНЕГО ПОРОГА ШУМА (строки 65-71)
-    - Ручная: выключаем AUTO_LOW_PASS и EEPROM_LOW_PASS, настраиваем LOW_PASS и SPEKTR_LOW_PASS вручную
-    - При запуске: включаем AUTO_LOW_PASS. При подаче питания музыка должна стоять на паузе!
-    - По кнопке: при удерживании кнопки 1 секунду настраивается нижний порог шума (музыку на паузу!)
-    - Из памяти (ЛУЧШИЙ ВАРИАНТ): выключаем AUTO_LOW_PASS и включаем EEPROM_LOW_PASS
-      - Включаем систему
-      - Ставим музыку на паузу
-      - Удерживаем кнопку 1 секунду
+     - Включаем систему
+     - Ставим музыку на паузу
+     - Удерживаем кнопку 1 секунду ИЛИ жмём кнопку 0 на пульте
       Значения шумов будут записаны в память и САМИ загружаться при последующем запуске! Всё!
 
    Пульт:
@@ -97,8 +93,7 @@ byte BRIGHTNESS = 200;      // яркость (0 - 255)
 #define IR_PIN 2           // ИК приёмник
 
 // настройки радуги
-byte RAINBOW_SPEED = 6;     // скорость движения радуги (чем меньше число, тем быстрее радуга)
-#define RAINBOW_STEP 6     // шаг изменения цвета радуги
+float RAINBOW_STEP = 5.5;   // шаг изменения цвета радуги
 
 // отрисовка
 #define MODE 0              // режим при запуске
@@ -142,7 +137,7 @@ byte STROBE_SMOOTH = 100;          // скорость нарастания/уг
 byte LIGHT_COLOR = 0;              // начальный цвет подсветки
 byte LIGHT_SAT = 200;              // начальная насыщенность подсветки
 byte COLOR_SPEED = 100;
-byte RAINBOW_PERIOD = 3;
+int RAINBOW_PERIOD = 3;
 float RAINBOW_STEP_2 = 5.5;
 
 // режим бегущих частот
@@ -256,7 +251,7 @@ int8_t freq_strobe_mode, light_mode;
 int freq_max;
 float freq_max_f, rainbow_steps;
 int freq_f[32];
-uint16_t this_color;
+int this_color;
 boolean running_flag[3], eeprom_flag;
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -302,7 +297,7 @@ void setup() {
   // в 100 ячейке хранится число 100. Если нет - значит это первый запуск системы
   if (KEEP_SETTINGS) {
     if (EEPROM.read(100) != 100) {
-      Serial.println(F("First start"));
+      //Serial.println(F("First start"));
       EEPROM.write(100, 100);
       updateEEPROM();
     } else {
@@ -314,7 +309,6 @@ void setup() {
 void loop() {
   buttonTick();     // опрос и обработка кнопки
   remoteTick();     // опрос ИК пульта
-  rainbowTick();    // пересчёт радуги
   mainLoop();       // главный цикл обработки и отрисовки
   eepromTick();     // проверка не пора ли сохранить настройки
 }
@@ -492,6 +486,10 @@ void animation() {
       }
       break;
     case 1:
+      if (millis() - rainbow_timer > 30) {
+        rainbow_timer = millis();
+        hue = floor((float)hue + RAINBOW_STEP);
+      }
       count = 0;
       for (int i = (MAX_CH - 1); i > ((MAX_CH - 1) - Rlenght); i--) {
         leds[i] = ColorFromPalette(RainbowColors_p, (count * index) / 2 - hue);  // заливка по палитре радуга
@@ -569,12 +567,14 @@ void animation() {
             rainbow_timer = millis();
             this_color += RAINBOW_PERIOD;
             if (this_color > 255) this_color = 0;
+            if (this_color < 0) this_color = 255;
           }
           rainbow_steps = this_color;
           for (int i = 0; i < NUM_LEDS; i++) {
             leds[i] = CHSV((int)floor(rainbow_steps), 255, 255);
             rainbow_steps += RAINBOW_STEP_2;
             if (rainbow_steps > 255) rainbow_steps = 0;
+            if (rainbow_steps < 0) rainbow_steps = 255;
           }
           break;
       }
@@ -640,14 +640,12 @@ void SILENCE() {
 int smartIncr(int value, int incr_step, int mininmum, int maximum) {
   int val_buf = value + incr_step;
   val_buf = constrain(val_buf, mininmum, maximum);
-  //Serial.println(val_buf);
   return val_buf;
 }
 
 float smartIncrFloat(float value, float incr_step, float mininmum, float maximum) {
   float val_buf = value + incr_step;
   val_buf = constrain(val_buf, mininmum, maximum);
-  //Serial.println(val_buf);
   return val_buf;
 }
 
@@ -698,7 +696,7 @@ void remoteTick() {
           switch (this_mode) {
             case 0:
               break;
-            case 1: RAINBOW_SPEED = smartIncr(RAINBOW_SPEED, 1, 1, 100);
+            case 1: RAINBOW_STEP = smartIncrFloat(RAINBOW_STEP, 0.5, 0.5, 20);
               break;
             case 2:
             case 3:
@@ -712,7 +710,7 @@ void remoteTick() {
                   break;
                 case 1: LIGHT_SAT = smartIncr(LIGHT_SAT, 20, 0, 255);
                   break;
-                case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, 0.5, 0.1, 50);
+                case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, 0.5, 0.5, 10);
                   break;
               }
               break;
@@ -731,7 +729,7 @@ void remoteTick() {
           switch (this_mode) {
             case 0:
               break;
-            case 1: RAINBOW_SPEED = smartIncr(RAINBOW_SPEED, -1, 1, 100);
+            case 1: RAINBOW_STEP = smartIncrFloat(RAINBOW_STEP, -0.5, 0.5, 20);
               break;
             case 2:
             case 3:
@@ -745,7 +743,7 @@ void remoteTick() {
                   break;
                 case 1: LIGHT_SAT = smartIncr(LIGHT_SAT, -20, 0, 255);
                   break;
-                case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, -0.5, 0.1, 50);
+                case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, -0.5, 0.5, 10);
                   break;
               }
               break;
@@ -764,7 +762,7 @@ void remoteTick() {
         } else {
           switch (this_mode) {
             case 0:
-            case 1: SMOOTH = smartIncrFloat(SMOOTH, -0.02, 0.01, 1);
+            case 1: SMOOTH = smartIncrFloat(SMOOTH, -0.05, 0.05, 1);
               break;
             case 2:
             case 3:
@@ -778,7 +776,7 @@ void remoteTick() {
                   break;
                 case 1: COLOR_SPEED = smartIncr(COLOR_SPEED, -10, 0, 255);
                   break;
-                case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, -1, 1, 50);
+                case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, -1, -20, 20);
                   break;
               }
               break;
@@ -797,7 +795,7 @@ void remoteTick() {
         } else {
           switch (this_mode) {
             case 0:
-            case 1: SMOOTH = smartIncrFloat(SMOOTH, 0.02, 0.01, 1);
+            case 1: SMOOTH = smartIncrFloat(SMOOTH, 0.05, 0.05, 1);
               break;
             case 2:
             case 3:
@@ -811,7 +809,7 @@ void remoteTick() {
                   break;
                 case 1: COLOR_SPEED = smartIncr(COLOR_SPEED, 10, 0, 255);
                   break;
-                case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, 1, 1, 50);
+                case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, 1, -20, 20);
                   break;
               }
               break;
@@ -903,7 +901,7 @@ void updateEEPROM() {
   EEPROM.updateByte(1, this_mode);
   EEPROM.updateByte(2, freq_strobe_mode);
   EEPROM.updateByte(3, light_mode);
-  EEPROM.updateInt(4, RAINBOW_SPEED);
+  EEPROM.updateInt(4, RAINBOW_STEP);
   EEPROM.updateFloat(8, MAX_COEF_FREQ);
   EEPROM.updateInt(12, STROBE_PERIOD);
   EEPROM.updateInt(16, LIGHT_SAT);
@@ -923,7 +921,7 @@ void readEEPROM() {
   this_mode = EEPROM.readByte(1);
   freq_strobe_mode = EEPROM.readByte(2);
   light_mode = EEPROM.readByte(3);
-  RAINBOW_SPEED = EEPROM.readInt(4);
+  RAINBOW_STEP = EEPROM.readInt(4);
   MAX_COEF_FREQ = EEPROM.readFloat(8);
   STROBE_PERIOD = EEPROM.readInt(12);
   LIGHT_SAT = EEPROM.readInt(16);
@@ -946,12 +944,4 @@ void eepromTick() {
       eeprom_timer = millis();
       updateEEPROM();
     }
-}
-
-void rainbowTick() {
-  // кольцевое изменение положения радуги по таймеру
-  if (millis() - hue_timer > RAINBOW_SPEED) {
-    if (++hue >= 255) hue = 0;
-    hue_timer = millis();
-  }
 }
