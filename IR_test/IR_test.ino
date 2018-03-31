@@ -1,5 +1,5 @@
 #include "IRremote.h"
-IRrecv irrecv(4); // указываем вывод, к которому подключен приемник
+IRrecv irrecv(2); // указываем вывод, к которому подключен приемник
 decode_results results;
 
 void setup() {
@@ -8,8 +8,9 @@ void setup() {
 }
 
 void loop() {
-  if ( irrecv.decode( &results )) { // если данные пришли
+  if ( irrecv.decode( &results )) {   // если данные пришли
+    Serial.print("0x");
     Serial.println(results.value, HEX);
-    irrecv.resume(); // принимаем следующую команду
+    irrecv.resume();  // принимаем следующую команду
   }
 }
