@@ -18,7 +18,7 @@
 // Use this to force FastLED to allow interrupts in the clockless chipsets (or to force it to
 // disallow), overriding the default on platforms that support this.  Set the value to 1 to
 // allow interrupts or 0 to disallow them.
-// #define FASTLED_ALLOW_INTERRUPTS 1
+#define FASTLED_ALLOW_INTERRUPTS 1
 // #define FASTLED_ALLOW_INTERRUPTS 0
 
 // Use this to allow some integer overflows/underflows in the inoise functions.

@@ -1,8 +1,8 @@
 /*
-   Версия 2.5 использует библиотеки Adafruit_NeoPixel и IRLremote вместо FastLED и IRremote
+   Версия 2.6 использует библиотеки FastLED и IRLremote!
    Библиотеки идут в архиве с проектом! https://alexgyver.ru/colormusic/
    Крутейшая свето-цветомузыка на Arduino и адресной светодиодной ленте WS2812b.
-   Данная версия поддерживает около 410 светодиодов!
+   Данная версия поддерживает около 360 светодиодов!
    Версия для ИК пульта KEYES
    Управление:
     - Однократное нажатие кнопки: смена режима
@@ -14,17 +14,17 @@
     - Светомузыка по частотам: 3 полосы
     - Светомузыка по частотам: 1 полоса
     - Стробоскоп
-    - Подсветка
-    - Бегущие частоты
-    - Анализатор спектра
+    - (2.0) Подсветка
+    - (2.0) Бегущие частоты
+    - (2.1) анализатор спектра
    Особенности:
     - Плавная анимация (можно настроить)
     - Автонастройка по громкости (можно настроить)
     - Фильтр нижнего шума (можно настроить)
     - Автокалибровка шума при запуске (можно настроить)
     - Поддержка стерео и моно звука (можно настроить)
-    - В режиме частот лента не гаснет полностью (EMPTY_BRIGHT)
-    - Все настройки сохраняются в памяти и не сбрасываются при перезагрузке
+    - (2.0) в режиме частот лента не гаснет полностью (EMPTY_BRIGHT)
+    - (2.1) все настройки сохраняются в памяти и не сбрасываются при перезагрузке
       - Сохранение настроек происходит при выключении кнопкой звёздочка (*)
       - А также через 30 секунд после последнего нажатия на любую кнопку ИК пульта
 
@@ -86,8 +86,8 @@
 // поставить 1. Прошиться. Поставить обратно 0. Прошиться. Всё.
 
 // лента
-#define NUM_LEDS 310       // количество светодиодов
-byte BRIGHTNESS = 200;     // яркость (0 - 255)
+#define NUM_LEDS 60        // количество светодиодов
+byte BRIGHTNESS = 200;      // яркость (0 - 255)
 
 // пины
 #define SOUND_R A2         // аналоговый пин вход аудио, правый канал
@@ -168,37 +168,27 @@ byte HUE_STEP = 5;
 // --------------------------- НАСТРОЙКИ ---------------------------
 
 // ----- КНОПКИ ПУЛЬТА -----
-#define BUTT_UP     0xE51CA6AD
-#define BUTT_DOWN   0xD22353AD
-#define BUTT_LEFT   0x517068AD
-#define BUTT_RIGHT  0xAC2A56AD
-#define BUTT_OK     0x1B92DDAD
-#define BUTT_1      0x68E456AD
-#define BUTT_2      0xF08A26AD
-#define BUTT_3      0x151CD6AD
-#define BUTT_4      0x18319BAD
-#define BUTT_5      0xF39EEBAD
-#define BUTT_6      0x4AABDFAD
-#define BUTT_7      0xE25410AD
-#define BUTT_8      0x297C76AD
-#define BUTT_9      0x14CE54AD
-#define BUTT_0      0xC089F6AD
-#define BUTT_STAR   0xAF3F1BAD
-#define BUTT_HASH   0x38379AD
+#define BUTT_UP     0xF39EEBAD
+#define BUTT_DOWN   0xC089F6AD
+#define BUTT_LEFT   0xE25410AD
+#define BUTT_RIGHT  0x14CE54AD
+#define BUTT_OK     0x297C76AD
+#define BUTT_1      0x4E5BA3AD
+#define BUTT_2      0xE51CA6AD
+#define BUTT_3      0xE207E1AD
+#define BUTT_4      0x517068AD
+#define BUTT_5      0x1B92DDAD
+#define BUTT_6      0xAC2A56AD
+#define BUTT_7      0x5484B6AD
+#define BUTT_8      0xD22353AD
+#define BUTT_9      0xDF3F4BAD
+#define BUTT_0      0xF08A26AD
+#define BUTT_STAR   0x68E456AD
+#define BUTT_HASH   0x151CD6AD
 // ----- КНОПКИ ПУЛЬТА -----
 
 // ------------------------------ ДЛЯ РАЗРАБОТЧИКОВ --------------------------------
 #define MODE_AMOUNT 9      // количество режимов
-
-// цвета HSV
-#define HUE_RED 0
-#define HUE_ORANGE 12
-#define HUE_YELLOW 44
-#define HUE_GREEN 85
-#define HUE_AQUA 128
-#define HUE_BLUE 171
-#define HUE_PURPLE 213
-#define HUE_PINK 244
 
 #define STRIPE NUM_LEDS / 5
 float freq_to_stripe = NUM_LEDS / 40; // /2 так как симметрия, и /20 так как 20 частот
@@ -209,8 +199,9 @@ float freq_to_stripe = NUM_LEDS / 40; // /2 так как симметрия, и
 
 #include <EEPROMex.h>
 
-#include "Adafruit_NeoPixel.h"
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
+#define FASTLED_ALLOW_INTERRUPTS 1
+#include "FastLED.h"
+CRGB leds[NUM_LEDS];
 
 #include "GyverButton.h"
 GButton butt1(BTN_PIN);
@@ -218,6 +209,16 @@ GButton butt1(BTN_PIN);
 #include "IRLremote.h"
 CHashIR IRLremote;
 uint32_t IRdata;
+
+// градиент-палитра от зелёного к красному
+DEFINE_GRADIENT_PALETTE(soundlevel_gp) {
+  0,    0,    255,  0,  // green
+  100,  255,  255,  0,  // yellow
+  150,  255,  100,  0,  // orange
+  200,  255,  50,   0,  // red
+  255,  255,  0,    0   // red
+};
+CRGBPalette32 myPal = soundlevel_gp;
 
 byte Rlenght, Llenght;
 float RsoundLevel, RsoundLevel_f;
@@ -230,8 +231,7 @@ int hue;
 unsigned long main_timer, hue_timer, strobe_timer, running_timer, color_timer, rainbow_timer, eeprom_timer;
 float averK = 0.006;
 byte count;
-float index = (float)(HUE_GREEN - HUE_RED) / MAX_CH;   // коэффициент перевода для палитры зеленый-красный
-float index2 = (float)255 / MAX_CH;   // коэффициент перевода для радуги
+float index = (float)255 / MAX_CH;   // коэффициент перевода для палитры
 boolean lowFlag;
 byte low_pass;
 int RcurrentLevel, LcurrentLevel;
@@ -256,9 +256,8 @@ boolean running_flag[3], eeprom_flag;
 
 void setup() {
   Serial.begin(9600);
-
-  strip.begin();
-  strip.setBrightness(BRIGHTNESS);
+  FastLED.addLeds<WS2811, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.setBrightness(BRIGHTNESS);
 
   pinMode(13, OUTPUT);
   digitalWrite(13, LOW);
@@ -350,7 +349,7 @@ void mainLoop() {
         // заливаем "подложку", если яркость достаточная
         if (EMPTY_BRIGHT > 5) {
           for (int i = 0; i < NUM_LEDS; i++)
-            setPixelHSV(i, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+            leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
         }
 
         // если значение выше порога - начинаем самое интересное
@@ -453,10 +452,10 @@ void mainLoop() {
       if (this_mode == 6) animation();
 
       if (!IRLremote.receiving())    // если на ИК приёмник не приходит сигнал (без этого НЕ РАБОТАЕТ!)
-        strip.show();                // отправить значения на ленту
+        FastLED.show();         // отправить значения на ленту
 
       if (this_mode != 7)       // 7 режиму не нужна очистка!!!
-        strip.clear();          // очистить массив пикселей
+        FastLED.clear();          // очистить массив пикселей
       main_timer = millis();    // сбросить таймер
     }
   }
@@ -468,58 +467,59 @@ void animation() {
     case 0:
       count = 0;
       for (int i = (MAX_CH - 1); i > ((MAX_CH - 1) - Rlenght); i--) {
-        setPixelHSV(i, HUE_GREEN - count * index, 255, 255);
+        leds[i] = ColorFromPalette(myPal, (count * index));   // заливка по палитре " от зелёного к красному"
         count++;
       }
       count = 0;
       for (int i = (MAX_CH); i < (MAX_CH + Llenght); i++ ) {
-        setPixelHSV(i, HUE_GREEN - count * index, 255, 255);
+        leds[i] = ColorFromPalette(myPal, (count * index));   // заливка по палитре " от зелёного к красному"
         count++;
       }
       if (EMPTY_BRIGHT > 0) {
+        CHSV this_dark = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
         for (int i = ((MAX_CH - 1) - Rlenght); i > 0; i--)
-          setPixelHSV(i, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+          leds[i] = this_dark;
         for (int i = MAX_CH + Llenght; i < NUM_LEDS; i++)
-          setPixelHSV(i, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+          leds[i] = this_dark;
       }
       break;
     case 1:
-      if (millis() - rainbow_timer > 35) {
+      if (millis() - rainbow_timer > 30) {
         rainbow_timer = millis();
         hue = floor((float)hue + RAINBOW_STEP);
-        if (hue > 255) hue = 0;
       }
       count = 0;
       for (int i = (MAX_CH - 1); i > ((MAX_CH - 1) - Rlenght); i--) {
-        setPixelHSV(i, (count * index) / 2 - hue, 255, 255);
+        leds[i] = ColorFromPalette(RainbowColors_p, (count * index) / 2 - hue);  // заливка по палитре радуга
         count++;
       }
       count = 0;
       for (int i = (MAX_CH); i < (MAX_CH + Llenght); i++ ) {
-        setPixelHSV(i, (count * index) / 2 - hue, 255, 255);
+        leds[i] = ColorFromPalette(RainbowColors_p, (count * index) / 2 - hue); // заливка по палитре радуга
         count++;
       }
       if (EMPTY_BRIGHT > 0) {
+        CHSV this_dark = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
         for (int i = ((MAX_CH - 1) - Rlenght); i > 0; i--)
-          setPixelHSV(i, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+          leds[i] = this_dark;
         for (int i = MAX_CH + Llenght; i < NUM_LEDS; i++)
-          setPixelHSV(i, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+          leds[i] = this_dark;
       }
       break;
     case 2:
       for (int i = 0; i < NUM_LEDS; i++) {
-        if (i < STRIPE)          setPixelHSV(i, HIGH_COLOR, 255, thisBright[2]);
-        else if (i < STRIPE * 2) setPixelHSV(i, MID_COLOR, 255, thisBright[1]);
-        else if (i < STRIPE * 3) setPixelHSV(i, LOW_COLOR, 255, thisBright[0]);
-        else if (i < STRIPE * 4) setPixelHSV(i, MID_COLOR, 255, thisBright[1]);
-        else if (i < STRIPE * 5) setPixelHSV(i, HIGH_COLOR, 255, thisBright[2]);
+        if (i < STRIPE)          leds[i] = CHSV(HIGH_COLOR, 255, thisBright[2]);
+        else if (i < STRIPE * 2) leds[i] = CHSV(MID_COLOR, 255, thisBright[1]);
+        else if (i < STRIPE * 3) leds[i] = CHSV(LOW_COLOR, 255, thisBright[0]);
+        else if (i < STRIPE * 4) leds[i] = CHSV(MID_COLOR, 255, thisBright[1]);
+        else if (i < STRIPE * 5) leds[i] = CHSV(HIGH_COLOR, 255, thisBright[2]);
       }
       break;
     case 3:
       for (int i = 0; i < NUM_LEDS; i++) {
-        if (i < NUM_LEDS / 3)          setPixelHSV(i, HIGH_COLOR, 255, thisBright[2]);
-        else if (i < NUM_LEDS * 2 / 3) setPixelHSV(i, MID_COLOR, 255, thisBright[1]);
-        else if (i < NUM_LEDS)         setPixelHSV(i, LOW_COLOR, 255, thisBright[0]);
+        if (i < NUM_LEDS / 3)          leds[i] = CHSV(HIGH_COLOR, 255, thisBright[2]);
+        else if (i < NUM_LEDS * 2 / 3) leds[i] = CHSV(MID_COLOR, 255, thisBright[1]);
+        else if (i < NUM_LEDS)         leds[i] = CHSV(LOW_COLOR, 255, thisBright[0]);
       }
       break;
     case 4:
@@ -545,29 +545,24 @@ void animation() {
       }
       break;
     case 5:
-      if (strobe_bright > 0) {
-        setPixelHSV(0, STROBE_COLOR, STROBE_SAT, strobe_bright);
-        uint32_t new_color = strip.getPixelColor(0);
-        for (int i = 1; i < NUM_LEDS; i++) strip.setPixelColor(i, new_color);
-      } else {
-        setPixelHSV(0, EMPTY_COLOR, 255, EMPTY_BRIGHT);
-        uint32_t new_color = strip.getPixelColor(0);
-        for (int i = 1; i < NUM_LEDS; i++) strip.setPixelColor(i, new_color);
-      }
+      if (strobe_bright > 0)
+        for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(STROBE_COLOR, STROBE_SAT, strobe_bright);
+      else
+        for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
       break;
     case 6:
       switch (light_mode) {
-        case 0: for (int i = 0; i < NUM_LEDS; i++) setPixelHSV(i, LIGHT_COLOR, LIGHT_SAT, 255);
+        case 0: for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(LIGHT_COLOR, LIGHT_SAT, 255);
           break;
         case 1:
           if (millis() - color_timer > COLOR_SPEED) {
             color_timer = millis();
             if (++this_color > 255) this_color = 0;
           }
-          for (int i = 0; i < NUM_LEDS; i++) setPixelHSV(i, this_color, LIGHT_SAT, 255);
+          for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(this_color, LIGHT_SAT, 255);
           break;
         case 2:
-          if (millis() - rainbow_timer > 35) {
+          if (millis() - rainbow_timer > 30) {
             rainbow_timer = millis();
             this_color += RAINBOW_PERIOD;
             if (this_color > 255) this_color = 0;
@@ -575,7 +570,7 @@ void animation() {
           }
           rainbow_steps = this_color;
           for (int i = 0; i < NUM_LEDS; i++) {
-            setPixelHSV(i, (int)floor(rainbow_steps), 255, 255);
+            leds[i] = CHSV((int)floor(rainbow_steps), 255, 255);
             rainbow_steps += RAINBOW_STEP_2;
             if (rainbow_steps > 255) rainbow_steps = 0;
             if (rainbow_steps < 0) rainbow_steps = 255;
@@ -586,30 +581,30 @@ void animation() {
     case 7:
       switch (freq_strobe_mode) {
         case 0:
-          if (running_flag[2]) setPixelHSV(NUM_LEDS / 2, HIGH_COLOR, 255, thisBright[2]);
-          else if (running_flag[1]) setPixelHSV(NUM_LEDS / 2, MID_COLOR, 255, thisBright[1]);
-          else if (running_flag[0]) setPixelHSV(NUM_LEDS / 2, LOW_COLOR, 255, thisBright[0]);
-          else setPixelHSV(NUM_LEDS / 2, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+          if (running_flag[2]) leds[NUM_LEDS / 2] = CHSV(HIGH_COLOR, 255, thisBright[2]);
+          else if (running_flag[1]) leds[NUM_LEDS / 2] = CHSV(MID_COLOR, 255, thisBright[1]);
+          else if (running_flag[0]) leds[NUM_LEDS / 2] = CHSV(LOW_COLOR, 255, thisBright[0]);
+          else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
           break;
         case 1:
-          if (running_flag[2]) setPixelHSV(NUM_LEDS / 2, HIGH_COLOR, 255, thisBright[2]);
-          else setPixelHSV(NUM_LEDS / 2, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+          if (running_flag[2]) leds[NUM_LEDS / 2] = CHSV(HIGH_COLOR, 255, thisBright[2]);
+          else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
           break;
         case 2:
-          if (running_flag[1]) setPixelHSV(NUM_LEDS / 2, MID_COLOR, 255, thisBright[1]);
-          else setPixelHSV(NUM_LEDS / 2, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+          if (running_flag[1]) leds[NUM_LEDS / 2] = CHSV(MID_COLOR, 255, thisBright[1]);
+          else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
           break;
         case 3:
-          if (running_flag[0]) setPixelHSV(NUM_LEDS / 2, LOW_COLOR, 255, thisBright[0]);
-          else setPixelHSV(NUM_LEDS / 2, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+          if (running_flag[0]) leds[NUM_LEDS / 2] = CHSV(LOW_COLOR, 255, thisBright[0]);
+          else leds[NUM_LEDS / 2] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
           break;
       }
-      strip.setPixelColor((NUM_LEDS / 2) - 1, strip.getPixelColor(NUM_LEDS / 2));
+      leds[(NUM_LEDS / 2) - 1] = leds[NUM_LEDS / 2];
       if (millis() - running_timer > RUNNING_SPEED) {
         running_timer = millis();
         for (byte i = 0; i < NUM_LEDS / 2 - 1; i++) {
-          strip.setPixelColor(i, strip.getPixelColor(i + 1));
-          strip.setPixelColor(NUM_LEDS - i - 1, strip.getPixelColor(i));
+          leds[i] = leds[i + 1];
+          leds[NUM_LEDS - i - 1] = leds[i];
         }
       }
       break;
@@ -618,8 +613,8 @@ void animation() {
       for (byte i = 0; i < NUM_LEDS / 2; i++) {
         byte this_bright = map(freq_f[(int)floor((NUM_LEDS / 2 - i) / freq_to_stripe)], 0, freq_max_f, 0, 255);
         this_bright = constrain(this_bright, 0, 255);
-        setPixelHSV(i, HUEindex, 255, this_bright);
-        setPixelHSV(NUM_LEDS - i - 1, HUEindex, 255, this_bright);
+        leds[i] = CHSV(HUEindex, 255, this_bright);
+        leds[NUM_LEDS - i - 1] = leds[i];
         HUEindex += HUE_STEP;
         if (HUEindex > 255) HUEindex = 0;
       }
@@ -628,30 +623,28 @@ void animation() {
 }
 
 void HIGHS() {
-  for (int i = 0; i < NUM_LEDS; i++) setPixelHSV(i, HIGH_COLOR, 255, thisBright[2]);
+  for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(HIGH_COLOR, 255, thisBright[2]);
 }
 void MIDS() {
-  for (int i = 0; i < NUM_LEDS; i++) setPixelHSV(i, MID_COLOR, 255, thisBright[1]);
+  for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(MID_COLOR, 255, thisBright[1]);
 }
 void LOWS() {
-  for (int i = 0; i < NUM_LEDS; i++) setPixelHSV(i, LOW_COLOR, 255, thisBright[0]);
+  for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(LOW_COLOR, 255, thisBright[0]);
 }
 void SILENCE() {
-  for (int i = 0; i < NUM_LEDS; i++) setPixelHSV(i, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+  for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(EMPTY_COLOR, 255, EMPTY_BRIGHT);
 }
 
 // вспомогательная функция, изменяет величину value на шаг incr в пределах minimum.. maximum
 int smartIncr(int value, int incr_step, int mininmum, int maximum) {
   int val_buf = value + incr_step;
   val_buf = constrain(val_buf, mininmum, maximum);
-  //Serial.println(val_buf);
   return val_buf;
 }
 
 float smartIncrFloat(float value, float incr_step, float mininmum, float maximum) {
   float val_buf = value + incr_step;
   val_buf = constrain(val_buf, mininmum, maximum);
-  //Serial.println(val_buf);
   return val_buf;
 }
 
@@ -661,7 +654,6 @@ void remoteTick() {
     IRdata = data.command;
     ir_flag = true;
   }
-
   if (ir_flag) { // если данные пришли
     eeprom_timer = millis();
     eeprom_flag = true;
@@ -687,7 +679,7 @@ void remoteTick() {
         break;
       case BUTT_0: fullLowPass();
         break;
-      case BUTT_STAR: ONstate = !ONstate; strip.clear(); strip.show(); updateEEPROM();
+      case BUTT_STAR: ONstate = !ONstate; FastLED.clear(); FastLED.show(); updateEEPROM();
         break;
       case BUTT_HASH:
         switch (this_mode) {
@@ -770,7 +762,7 @@ void remoteTick() {
         if (settings_mode) {
           // ВЛЕВО общие настройки
           BRIGHTNESS = smartIncr(BRIGHTNESS, -20, 0, 255);
-          strip.setBrightness(BRIGHTNESS);
+          FastLED.setBrightness(BRIGHTNESS);
         } else {
           switch (this_mode) {
             case 0:
@@ -803,7 +795,7 @@ void remoteTick() {
         if (settings_mode) {
           // ВПРАВО общие настройки
           BRIGHTNESS = smartIncr(BRIGHTNESS, 20, 0, 255);
-          strip.setBrightness(BRIGHTNESS);
+          FastLED.setBrightness(BRIGHTNESS);
         } else {
           switch (this_mode) {
             case 0:
@@ -893,13 +885,13 @@ void buttonTick() {
 }
 void fullLowPass() {
   digitalWrite(13, HIGH);   // включить светодиод 13 пин
-  strip.setBrightness(0); // погасить ленту
-  strip.clear();          // очистить массив пикселей
-  strip.show();           // отправить значения на ленту
+  FastLED.setBrightness(0); // погасить ленту
+  FastLED.clear();          // очистить массив пикселей
+  FastLED.show();           // отправить значения на ленту
   delay(500);               // подождать чутка
   autoLowPass();            // измерить шумы
   delay(500);               // подождать
-  strip.setBrightness(BRIGHTNESS);  // вернуть яркость
+  FastLED.setBrightness(BRIGHTNESS);  // вернуть яркость
   digitalWrite(13, LOW);    // выключить светодиод
 }
 void updateEEPROM() {
@@ -949,49 +941,4 @@ void eepromTick() {
       eeprom_timer = millis();
       updateEEPROM();
     }
-}
-/*
-  void setPixelHSV(uint16_t pix, uint8_t h, uint8_t s, uint8_t v) {
-  float r, g, b;
-
-  float H = (float)h / 255;
-  float S = (float)s / 255;
-  float V = (float)v / 255;
-
-  int i = int(H * 6);
-  float f = H * 6 - i;
-  float p = V * (1 - S);
-  float q = V * (1 - f * S);
-  float t = V * (1 - (1 - f) * S);
-
-  switch (i % 6) {
-    case 0: r = V, g = t, b = p; break;
-    case 1: r = q, g = V, b = p; break;
-    case 2: r = p, g = V, b = t; break;
-    case 3: r = p, g = q, b = V; break;
-    case 4: r = t, g = p, b = V; break;
-    case 5: r = V, g = p, b = q; break;
-  }
-  r *= 255;
-  g *= 255;
-  b *= 255;
-  strip.setPixelColor(pix, r, g, b);
-  }
-*/
-void setPixelHSV(uint16_t pix, uint8_t hue, uint8_t sat, uint8_t val) {
-  byte h = ((24 * hue / 17) / 60) % 6;
-  byte vmin = (long)val - val * sat / 255;
-  byte a = (long)val * sat / 255 * (hue * 24 / 17 % 60) / 60;
-  byte vinc = vmin + a;
-  byte vdec = val - a;
-  byte r, g, b;
-  switch (h) {
-    case 0: r = val; g = vinc; b = vmin; break;
-    case 1: r = vdec; g = val; b = vmin; break;
-    case 2: r = vmin; g = val; b = vinc; break;
-    case 3: r = vmin; g = vdec; b = val; break;
-    case 4: r = vinc; g = vmin; b = val; break;
-    case 5: r = val; g = vmin; b = vdec; break;
-  }
-  strip.setPixelColor(pix, r, g, b);
 }

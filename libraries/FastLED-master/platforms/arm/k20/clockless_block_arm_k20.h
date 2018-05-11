@@ -15,7 +15,7 @@
 #define MIN(X,Y) (((X)<(Y)) ? (X):(Y))
 #define USED_LANES ((FIRST_PIN==2) ? MIN(LANES,8) : MIN(LANES,12))
 
-#include "kinetis.h"
+#include <kinetis.h>
 
 FASTLED_NAMESPACE_BEGIN
 
@@ -33,7 +33,7 @@ public:
 	virtual void showPixels(PixelController<RGB_ORDER, LANES, PORT_MASK> & pixels) { 
 		mWait.wait();
 		uint32_t clocks = showRGBInternal(pixels);
-		#if FASTLED_ALLOW_INTTERUPTS == 0
+		#if FASTLED_ALLOW_INTERRUPTS == 0
 		// Adjust the timer
 		long microsTaken = CLKS_TO_MICROS(clocks);
 		MS_COUNTER += (1 + (microsTaken / 1000));
@@ -228,7 +228,7 @@ public:
 	virtual void showPixels(PixelController<RGB_ORDER, LANES, PMASK> & pixels) { 
 		mWait.wait();
 		uint32_t clocks = showRGBInternal(pixels);
-		#if FASTLED_ALLOW_INTTERUPTS == 0
+		#if FASTLED_ALLOW_INTERRUPTS == 0
 		// Adjust the timer
 		long microsTaken = CLKS_TO_MICROS(clocks);
 		MS_COUNTER += (1 + (microsTaken / 1000));

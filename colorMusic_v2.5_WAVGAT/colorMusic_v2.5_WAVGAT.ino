@@ -545,10 +545,15 @@ void animation() {
       }
       break;
     case 5:
-      if (strobe_bright > 0)
-        for (int i = 0; i < NUM_LEDS; i++) setPixelHSV(i, STROBE_COLOR, STROBE_SAT, strobe_bright);
-      else
-        for (int i = 0; i < NUM_LEDS; i++) setPixelHSV(i, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+      if (strobe_bright > 0) {
+        setPixelHSV(0, STROBE_COLOR, STROBE_SAT, strobe_bright);
+        uint32_t new_color = strip.getPixelColor(0);
+        for (int i = 1; i < NUM_LEDS; i++) strip.setPixelColor(i, new_color);
+      } else {
+        setPixelHSV(0, EMPTY_COLOR, 255, EMPTY_BRIGHT);
+        uint32_t new_color = strip.getPixelColor(0);
+        for (int i = 1; i < NUM_LEDS; i++) strip.setPixelColor(i, new_color);
+      }
       break;
     case 6:
       switch (light_mode) {
