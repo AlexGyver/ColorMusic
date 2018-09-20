@@ -3,7 +3,7 @@
    Библиотеки идут в архиве с проектом! https://alexgyver.ru/colormusic/
    Крутейшая свето-цветомузыка на Arduino и адресной светодиодной ленте WS2812b.
    Данная версия поддерживает около 410 светодиодов!
-   Версия для ИК пульта WAVGAT
+   Версия для ИК пульта задаётся в IR_RCT.
    Управление:
     - Однократное нажатие кнопки: смена режима
     - Удержание кнопки: калибровка нижнего порога шума
@@ -97,7 +97,8 @@ byte BRIGHTNESS = 200;      // яркость (0 - 255)
 #define BTN_PIN 3          // кнопка переключения режимов (PIN --- КНОПКА --- GND)
 #define LED_PIN 12         // пин DI светодиодной ленты
 #define POT_GND A0         // пин земля для потенциометра
-#define IR_PIN 2           // ИК приёмник
+#define IR_RCT 1           // тип ИК пульта 0 - без пульта, 1-WAVGAT, 2-KEYES
+#define IR_PIN 2           // пин ИК приёмника
 
 // настройки радуги
 float RAINBOW_STEP = 5.5;   // шаг изменения цвета радуги
@@ -168,7 +169,8 @@ byte HUE_STEP = 5;
 */
 // --------------------------- НАСТРОЙКИ ---------------------------
 
-// ----- КНОПКИ ПУЛЬТА -----
+// ----- КНОПКИ ПУЛЬТА WAVGAT -----
+#if IR_RCT == 1
 #define BUTT_UP     0xF39EEBAD
 #define BUTT_DOWN   0xC089F6AD
 #define BUTT_LEFT   0xE25410AD
@@ -186,7 +188,30 @@ byte HUE_STEP = 5;
 #define BUTT_0      0xF08A26AD
 #define BUTT_STAR   0x68E456AD
 #define BUTT_HASH   0x151CD6AD
-// ----- КНОПКИ ПУЛЬТА -----
+#endif
+// ----- КНОПКИ ПУЛЬТА WAVGAT -----
+
+// ----- КНОПКИ ПУЛЬТА KEYES -----
+#if IR_RCT == 2
+#define BUTT_UP     0xE51CA6AD
+#define BUTT_DOWN   0xD22353AD
+#define BUTT_LEFT   0x517068AD
+#define BUTT_RIGHT  0xAC2A56AD
+#define BUTT_OK     0x1B92DDAD
+#define BUTT_1      0x68E456AD
+#define BUTT_2      0xF08A26AD
+#define BUTT_3      0x151CD6AD
+#define BUTT_4      0x18319BAD
+#define BUTT_5      0xF39EEBAD
+#define BUTT_6      0x4AABDFAD
+#define BUTT_7      0xE25410AD
+#define BUTT_8      0x297C76AD
+#define BUTT_9      0x14CE54AD
+#define BUTT_0      0xC089F6AD
+#define BUTT_STAR   0xAF3F1BAD
+#define BUTT_HASH   0x38379AD
+#endif
+// ----- КНОПКИ ПУЛЬТА KEYES -----
 
 // ------------------------------ ДЛЯ РАЗРАБОТЧИКОВ --------------------------------
 #define MODE_AMOUNT 9      // количество режимов
@@ -306,7 +331,9 @@ void setup() {
 
 void loop() {
   buttonTick();     // опрос и обработка кнопки
+#if IR_RCT != 0
   remoteTick();     // опрос ИК пульта
+#endif
   mainLoop();       // главный цикл обработки и отрисовки
   eepromTick();     // проверка не пора ли сохранить настройки
 }
@@ -649,6 +676,7 @@ float smartIncrFloat(float value, float incr_step, float mininmum, float maximum
   return val_buf;
 }
 
+#if IR_RCT != 0
 void remoteTick() {
   if (IRLremote.available())  {
     auto data = IRLremote.read();
@@ -831,6 +859,7 @@ void remoteTick() {
     ir_flag = false;
   }
 }
+#endif
 
 void autoLowPass() {
   // для режима VU
