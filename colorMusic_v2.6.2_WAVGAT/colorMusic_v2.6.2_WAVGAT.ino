@@ -87,7 +87,7 @@
 // поставить 1. Прошиться. Поставить обратно 0. Прошиться. Всё.
 
 // лента
-#define NUM_LEDS 60        // количество светодиодов
+#define NUM_LEDS 10        // количество светодиодов
 byte BRIGHTNESS = 200;      // яркость (0 - 255)
 
 // пины
@@ -95,7 +95,15 @@ byte BRIGHTNESS = 200;      // яркость (0 - 255)
 #define SOUND_L A1         // аналоговый пин вход аудио, левый канал
 #define SOUND_R_FREQ A3    // аналоговый пин вход аудио для режима с частотами (через кондер)
 #define BTN_PIN 3          // кнопка переключения режимов (PIN --- КНОПКА --- GND)
+#if defined(__AVR_ATmega32U4__) // Пины для Arduino Pro Micro
+#define MLED_PIN 17           // пин светодиода режимов на ProMicro, т.к. обычный не выведен.
+#define MLED_ON LOW
+#define LED_PIN 9             // пин DI светодиодной ленты на ProMicro, т.к. обычный не выведен.
+#else                         // Пины для других плат Arduino (по умолчанию)
+#define MLED_PIN 13           // пин светодиода режимов
+#define MLED_ON HIGH
 #define LED_PIN 12         // пин DI светодиодной ленты
+#endif
 #define POT_GND A0         // пин земля для потенциометра
 #define IR_PIN 2           // ИК приёмник
 
@@ -109,7 +117,7 @@ float RAINBOW_STEP = 5.5;   // шаг изменения цвета радуги
 // сигнал
 #define MONO 1              // 1 - только один канал (ПРАВЫЙ!!!!! SOUND_R!!!!!), 0 - два канала
 #define EXP 1.4             // степень усиления сигнала (для более "резкой" работы) (по умолчанию 1.4)
-#define POTENT 1            // 1 - используем потенциометр, 0 - используется внутренний источник опорного напряжения 1.1 В
+#define POTENT 0            // 1 - используем потенциометр, 0 - используется внутренний источник опорного напряжения 1.1 В
 byte EMPTY_BRIGHT = 30;           // яркость "не горящих" светодиодов (0 - 255)
 #define EMPTY_COLOR HUE_PURPLE   // цвет "не горящих" светодиодов. Будет чёрный, если яркость 0
 
@@ -260,8 +268,12 @@ void setup() {
   FastLED.addLeds<WS2811, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(BRIGHTNESS);
 
-  pinMode(13, OUTPUT);
-  digitalWrite(13, LOW);
+  #if defined(__AVR_ATmega32U4__)   //Выключение светодиодов на Pro Micro
+  TXLED1;                           //на ProMicro выключим и TXLED
+  delay (1000);                     //При питании по usb от компьютера нужна задержка перед выключением RXLED. Если питать от БП, то можно убрать эту строку.
+  #endif
+  pinMode(MLED_PIN, OUTPUT);        //Режим пина для светодиода режима на выход
+  digitalWrite(MLED_PIN, !MLED_ON); //Выключение светодиода режима
 
   pinMode(POT_GND, OUTPUT);
   digitalWrite(POT_GND, LOW);
@@ -278,6 +290,9 @@ void setup() {
 
   // жуткая магия, меняем частоту оцифровки до 18 кГц
   // команды на ебучем ассемблере, даже не спрашивайте, как это работает
+  // поднимаем частоту опроса аналогового порта до 38.4 кГц, по теореме
+  // Котельникова (Найквиста) частота дискретизации будет 19.2 кГц
+  // http://yaab-arduino.blogspot.ru/2015/02/fast-sampling-from-analog-input.html
   sbi(ADCSRA, ADPS2);
   cbi(ADCSRA, ADPS1);
   sbi(ADCSRA, ADPS0);
@@ -691,7 +706,7 @@ void remoteTick() {
             break;
         }
         break;
-      case BUTT_OK: settings_mode = !settings_mode; digitalWrite(13, settings_mode);
+      case BUTT_OK: digitalWrite(MLED_PIN, settings_mode ^ MLED_ON); settings_mode = !settings_mode;
         break;
       case BUTT_UP:
         if (settings_mode) {
@@ -857,7 +872,6 @@ void autoLowPass() {
     delay(4);                               // ждём 4мс
   }
   SPEKTR_LOW_PASS = thisMax + LOW_PASS_FREQ_ADD;  // нижний порог как максимум тишины
-
   if (EEPROM_LOW_PASS && !AUTO_LOW_PASS) {
     EEPROM.updateInt(70, LOW_PASS);
     EEPROM.updateInt(72, SPEKTR_LOW_PASS);
@@ -885,7 +899,7 @@ void buttonTick() {
   }
 }
 void fullLowPass() {
-  digitalWrite(13, HIGH);   // включить светодиод 13 пин
+  digitalWrite(MLED_PIN, MLED_ON);   // включить светодиод
   FastLED.setBrightness(0); // погасить ленту
   FastLED.clear();          // очистить массив пикселей
   FastLED.show();           // отправить значения на ленту
@@ -893,7 +907,7 @@ void fullLowPass() {
   autoLowPass();            // измерить шумы
   delay(500);               // подождать
   FastLED.setBrightness(BRIGHTNESS);  // вернуть яркость
-  digitalWrite(13, LOW);    // выключить светодиод
+  digitalWrite(MLED_PIN, !MLED_ON);    // выключить светодиод
 }
 void updateEEPROM() {
   EEPROM.updateByte(1, this_mode);
