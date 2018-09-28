@@ -274,7 +274,12 @@ void setup() {
   // GND ---[10-20 кОм] --- REF --- [10 кОм] --- 3V3
   // в данной схеме GND берётся из А0 для удобства подключения
   if (POTENT) analogReference(EXTERNAL);
-  else analogReference(INTERNAL);
+  else
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+    analogReference(INTERNAL1V1);
+#else
+    analogReference(INTERNAL);
+#endif
 
   // жуткая магия, меняем частоту оцифровки до 18 кГц
   // команды на ебучем ассемблере, даже не спрашивайте, как это работает
