@@ -3,7 +3,7 @@
    Библиотеки идут в архиве с проектом! https://alexgyver.ru/colormusic/
    Крутейшая свето-цветомузыка на Arduino и адресной светодиодной ленте WS2812b.
    Данная версия поддерживает около 410 светодиодов!
-   Версия для ИК пульта WAVGAT
+   Версия ИК пульта задаётся в IR_RCT.
    Управление:
     - Однократное нажатие кнопки: смена режима
     - Удержание кнопки: калибровка нижнего порога шума
@@ -87,7 +87,7 @@
 // поставить 1. Прошиться. Поставить обратно 0. Прошиться. Всё.
 
 // лента
-#define NUM_LEDS 60        // количество светодиодов
+#define NUM_LEDS 10        // количество светодиодов
 byte BRIGHTNESS = 200;      // яркость (0 - 255)
 
 // пины
@@ -95,9 +95,18 @@ byte BRIGHTNESS = 200;      // яркость (0 - 255)
 #define SOUND_L A1         // аналоговый пин вход аудио, левый канал
 #define SOUND_R_FREQ A3    // аналоговый пин вход аудио для режима с частотами (через кондер)
 #define BTN_PIN 3          // кнопка переключения режимов (PIN --- КНОПКА --- GND)
+#if defined(__AVR_ATmega32U4__) // Пины для Arduino Pro Micro
+#define MLED_PIN 17           // пин светодиода режимов на ProMicro, т.к. обычный не выведен.
+#define MLED_ON LOW
+#define LED_PIN 9             // пин DI светодиодной ленты на ProMicro, т.к. обычный не выведен.
+#else                         // Пины для других плат Arduino (по умолчанию)
+#define MLED_PIN 13           // пин светодиода режимов
+#define MLED_ON HIGH
 #define LED_PIN 12         // пин DI светодиодной ленты
+#endif
 #define POT_GND A0         // пин земля для потенциометра
-#define IR_PIN 2           // ИК приёмник
+#define IR_RCT 1           // тип ИК пульта 0 - без пульта, 1-WAVGAT, 2-KEYES
+#define IR_PIN 2           // пин ИК приёмника
 
 // настройки радуги
 float RAINBOW_STEP = 5.5;   // шаг изменения цвета радуги
@@ -109,7 +118,7 @@ float RAINBOW_STEP = 5.5;   // шаг изменения цвета радуги
 // сигнал
 #define MONO 1              // 1 - только один канал (ПРАВЫЙ!!!!! SOUND_R!!!!!), 0 - два канала
 #define EXP 1.4             // степень усиления сигнала (для более "резкой" работы) (по умолчанию 1.4)
-#define POTENT 1            // 1 - используем потенциометр, 0 - используется внутренний источник опорного напряжения 1.1 В
+#define POTENT 0            // 1 - используем потенциометр, 0 - используется внутренний источник опорного напряжения 1.1 В
 byte EMPTY_BRIGHT = 30;           // яркость "не горящих" светодиодов (0 - 255)
 #define EMPTY_COLOR HUE_PURPLE   // цвет "не горящих" светодиодов. Будет чёрный, если яркость 0
 
@@ -134,7 +143,7 @@ float MAX_COEF_FREQ = 1.2;        // коэффициент порога для 
 #define HIGH_COLOR HUE_YELLOW     // цвет высоких
 
 // режим стробоскопа
-int STROBE_PERIOD = 100;          // период вспышек, миллисекунды
+uint16_t STROBE_PERIOD = 100;     // период вспышек, миллисекунды
 #define STROBE_DUTY 20            // скважность вспышек (1 - 99) - отношение времени вспышки ко времени темноты
 #define STROBE_COLOR HUE_YELLOW   // цвет стробоскопа
 #define STROBE_SAT 0              // насыщенность. Если 0 - цвет будет БЕЛЫЙ при любом цвете (0 - 255)
@@ -168,7 +177,8 @@ byte HUE_STEP = 5;
 */
 // --------------------------- НАСТРОЙКИ ---------------------------
 
-// ----- КНОПКИ ПУЛЬТА -----
+// ----- КНОПКИ ПУЛЬТА WAVGAT -----
+#if IR_RCT == 1
 #define BUTT_UP     0xF39EEBAD
 #define BUTT_DOWN   0xC089F6AD
 #define BUTT_LEFT   0xE25410AD
@@ -186,7 +196,30 @@ byte HUE_STEP = 5;
 #define BUTT_0      0xF08A26AD
 #define BUTT_STAR   0x68E456AD
 #define BUTT_HASH   0x151CD6AD
-// ----- КНОПКИ ПУЛЬТА -----
+#endif
+// ----- КНОПКИ ПУЛЬТА WAVGAT -----
+
+// ----- КНОПКИ ПУЛЬТА KEYES -----
+#if IR_RCT == 2
+#define BUTT_UP     0xE51CA6AD
+#define BUTT_DOWN   0xD22353AD
+#define BUTT_LEFT   0x517068AD
+#define BUTT_RIGHT  0xAC2A56AD
+#define BUTT_OK     0x1B92DDAD
+#define BUTT_1      0x68E456AD
+#define BUTT_2      0xF08A26AD
+#define BUTT_3      0x151CD6AD
+#define BUTT_4      0x18319BAD
+#define BUTT_5      0xF39EEBAD
+#define BUTT_6      0x4AABDFAD
+#define BUTT_7      0xE25410AD
+#define BUTT_8      0x297C76AD
+#define BUTT_9      0x14CE54AD
+#define BUTT_0      0xC089F6AD
+#define BUTT_STAR   0xAF3F1BAD
+#define BUTT_HASH   0x38379AD
+#endif
+// ----- КНОПКИ ПУЛЬТА KEYES -----
 
 // ------------------------------ ДЛЯ РАЗРАБОТЧИКОВ --------------------------------
 #define MODE_AMOUNT 9      // количество режимов
@@ -260,8 +293,12 @@ void setup() {
   FastLED.addLeds<WS2811, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(BRIGHTNESS);
 
-  pinMode(13, OUTPUT);
-  digitalWrite(13, LOW);
+  #if defined(__AVR_ATmega32U4__)   //Выключение светодиодов на Pro Micro
+  TXLED1;                           //на ProMicro выключим и TXLED
+  delay (1000);                     //При питании по usb от компьютера нужна задержка перед выключением RXLED. Если питать от БП, то можно убрать эту строку.
+  #endif
+  pinMode(MLED_PIN, OUTPUT);        //Режим пина для светодиода режима на выход
+  digitalWrite(MLED_PIN, !MLED_ON); //Выключение светодиода режима
 
   pinMode(POT_GND, OUTPUT);
   digitalWrite(POT_GND, LOW);
@@ -274,10 +311,18 @@ void setup() {
   // GND ---[10-20 кОм] --- REF --- [10 кОм] --- 3V3
   // в данной схеме GND берётся из А0 для удобства подключения
   if (POTENT) analogReference(EXTERNAL);
-  else analogReference(INTERNAL);
+  else
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+    analogReference(INTERNAL1V1);
+#else
+    analogReference(INTERNAL);
+#endif
 
   // жуткая магия, меняем частоту оцифровки до 18 кГц
   // команды на ебучем ассемблере, даже не спрашивайте, как это работает
+  // поднимаем частоту опроса аналогового порта до 38.4 кГц, по теореме
+  // Котельникова (Найквиста) частота дискретизации будет 19.2 кГц
+  // http://yaab-arduino.blogspot.ru/2015/02/fast-sampling-from-analog-input.html
   sbi(ADCSRA, ADPS2);
   cbi(ADCSRA, ADPS1);
   sbi(ADCSRA, ADPS0);
@@ -306,7 +351,9 @@ void setup() {
 
 void loop() {
   buttonTick();     // опрос и обработка кнопки
+#if IR_RCT != 0
   remoteTick();     // опрос ИК пульта
+#endif
   mainLoop();       // главный цикл обработки и отрисовки
   eepromTick();     // проверка не пора ли сохранить настройки
 }
@@ -649,6 +696,7 @@ float smartIncrFloat(float value, float incr_step, float mininmum, float maximum
   return val_buf;
 }
 
+#if IR_RCT != 0
 void remoteTick() {
   if (IRLremote.available())  {
     auto data = IRLremote.read();
@@ -691,7 +739,7 @@ void remoteTick() {
             break;
         }
         break;
-      case BUTT_OK: settings_mode = !settings_mode; digitalWrite(13, settings_mode);
+      case BUTT_OK: digitalWrite(MLED_PIN, settings_mode ^ MLED_ON); settings_mode = !settings_mode;
         break;
       case BUTT_UP:
         if (settings_mode) {
@@ -831,6 +879,7 @@ void remoteTick() {
     ir_flag = false;
   }
 }
+#endif
 
 void autoLowPass() {
   // для режима VU
@@ -857,7 +906,6 @@ void autoLowPass() {
     delay(4);                               // ждём 4мс
   }
   SPEKTR_LOW_PASS = thisMax + LOW_PASS_FREQ_ADD;  // нижний порог как максимум тишины
-
   if (EEPROM_LOW_PASS && !AUTO_LOW_PASS) {
     EEPROM.updateInt(70, LOW_PASS);
     EEPROM.updateInt(72, SPEKTR_LOW_PASS);
@@ -885,7 +933,7 @@ void buttonTick() {
   }
 }
 void fullLowPass() {
-  digitalWrite(13, HIGH);   // включить светодиод 13 пин
+  digitalWrite(MLED_PIN, MLED_ON);   // включить светодиод
   FastLED.setBrightness(0); // погасить ленту
   FastLED.clear();          // очистить массив пикселей
   FastLED.show();           // отправить значения на ленту
@@ -893,7 +941,7 @@ void fullLowPass() {
   autoLowPass();            // измерить шумы
   delay(500);               // подождать
   FastLED.setBrightness(BRIGHTNESS);  // вернуть яркость
-  digitalWrite(13, LOW);    // выключить светодиод
+  digitalWrite(MLED_PIN, !MLED_ON);    // выключить светодиод
 }
 void updateEEPROM() {
   EEPROM.updateByte(1, this_mode);
