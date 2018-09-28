@@ -134,7 +134,7 @@ float MAX_COEF_FREQ = 1.2;        // коэффициент порога для 
 #define HIGH_COLOR HUE_YELLOW     // цвет высоких
 
 // режим стробоскопа
-int STROBE_PERIOD = 100;          // период вспышек, миллисекунды
+uint16_t STROBE_PERIOD = 100;     // период вспышек, миллисекунды
 #define STROBE_DUTY 20            // скважность вспышек (1 - 99) - отношение времени вспышки ко времени темноты
 #define STROBE_COLOR HUE_YELLOW   // цвет стробоскопа
 #define STROBE_SAT 0              // насыщенность. Если 0 - цвет будет БЕЛЫЙ при любом цвете (0 - 255)
