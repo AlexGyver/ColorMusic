@@ -7,24 +7,39 @@
 #######################################
 
 GButton			KEYWORD1
-setDebounce		KEYWORD1
-setTimeout		KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
+setDebounce		KEYWORD2
+setTimeout		KEYWORD2
+setStepTimeout	KEYWORD2
+setType			KEYWORD2
+setDirection	KEYWORD2
+setTickMode		KEYWORD2
+
 tick			KEYWORD2
 isPress			KEYWORD2
 isRelease		KEYWORD2
+isClick			KEYWORD2
 isHolded		KEYWORD2
 isHold			KEYWORD2
-hasClicks		KEYWORD2
+state			KEYWORD2
 getClicks		KEYWORD2
 isSingle		KEYWORD2
 isDouble		KEYWORD2
 isTriple		KEYWORD2
-isIncr			KEYWORD2
-setIncrStep		KEYWORD2
-setIncrTimeout	KEYWORD2
-getIncr			KEYWORD2
+isStep			KEYWORD2
+inverse			KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+HIGH_PULL		LITERAL1
+LOW_PULL		LITERAL1
+NORM_OPEN		LITERAL1
+NORM_CLOSE		LITERAL1
+MANUAL			LITERAL1
+AUTO			LITERAL1

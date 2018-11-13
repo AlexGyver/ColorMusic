@@ -6,14 +6,14 @@
 
 #include "GyverButton.h"
 GButton butt1(PIN);
-// GButton butt1(PIN, HIGH_PULL, NORM_OPEN); // можно инициализировать так
+// GButton butt1(PIN, HIGH_PULL, NORM_OPEN); 	// можно инициализировать так
 
 int value = 0;
 
 void setup() {
   Serial.begin(9600);
 
-  butt1.setDebounce(50);        // настройка антидребезга (по умолчанию 80 мс)
+  butt1.setDebounce(90);        // настройка антидребезга (по умолчанию 80 мс)
   butt1.setTimeout(300);        // настройка таймаута на удержание (по умолчанию 500 мс)
 
   // HIGH_PULL - кнопка подключена к GND, пин подтянут к VCC (PIN --- КНОПКА --- GND)
@@ -23,10 +23,14 @@ void setup() {
   // NORM_OPEN - нормально-разомкнутая кнопка
   // NORM_CLOSE - нормально-замкнутая кнопка
   butt1.setDirection(NORM_OPEN);
+
+  // MANUAL - нужно вызывать функцию tick() вручную
+  // AUTO - tick() входит во все остальные функции и опрашивается сама!
+  butt1.setTickMode(AUTO);
 }
 
 void loop() {
-  butt1.tick();  // обязательная функция отработки. Должна постоянно опрашиваться
+  // butt1.tick();  // не нужна, в этом режиме (AUTO) она входит в каждую функцию
 
   if (butt1.isClick()) Serial.println("Click");         // проверка на один клик
   if (butt1.isSingle()) Serial.println("Single");       // проверка на один клик
