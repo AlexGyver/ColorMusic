@@ -114,6 +114,16 @@ byte HUE_STEP = 5;
   HUE_PINK
 */
 
+// ---- Режим огня ----
+// COOLING/Охлажнение: Насколько воздух охлаждается
+// Меньше охлаждение - выше пламя и наоборот
+// Default 50, suggested range 20-100 
+byte FIRE_COOLING = 50;
+
+// SPARKING: Какова вероятность появления искры
+// Default 120, suggested range 50-200.
+byte FIRE_SPARKING = 120;
+
 // ----- КНОПКИ ПУЛЬТА WAVGAT -----
 #if REMOTE_TYPE == 1
 #define BUTT_UP     0xF39EEBAD
@@ -609,6 +619,30 @@ void animation() {
             if (rainbow_steps < 0) rainbow_steps = 255;
           }
           break;
+
+        case 3:
+          static byte heat[NUM_LEDS];
+          // Step 1.  Cool down every cell a little
+          for( int i = 0; i < NUM_LEDS; i++) {
+            heat[i] = qsub8( heat[i],  random8(0, ((FIRE_COOLING * 10) / NUM_LEDS) + 2));
+          }
+          // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+          for( int k= NUM_LEDS - 1; k >= 2; k--) {
+            heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+          }
+          // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+          if( random8() < FIRE_SPARKING ) {
+            int y = random8(7);
+            heat[y] = qadd8( heat[y], random8(160,255) );
+          }
+          // Step 4.  Map from heat cells to LED colors
+          for( int j = 0; j < NUM_LEDS/*/2*/; j++) {
+            CRGB color = HeatColor( heat[j]);
+            int pixelnumber;
+            pixelnumber = j;
+            leds[pixelnumber] = color;
+          }
+          break;
       }
       break;
     case 7:
@@ -861,7 +895,7 @@ void remoteTick() {
           case 4:
           case 7: if (++freq_strobe_mode > 3) freq_strobe_mode = 0;
             break;
-          case 6: if (++light_mode > 2) light_mode = 0;
+          case 6: if (++light_mode > 3) light_mode = 0;
             break;
         }
         break;
@@ -891,6 +925,8 @@ void remoteTick() {
                   break;
                 case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, 0.5, 0.5, 10);
                   break;
+                case 3: FIRE_COOLING = smartIncr(FIRE_COOLING, 10, 20, 100);
+                  break; 
               }
               break;
             case 7: MAX_COEF_FREQ = smartIncrFloat(MAX_COEF_FREQ, 0.1, 0.0, 10);
@@ -924,6 +960,8 @@ void remoteTick() {
                   break;
                 case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, -0.5, 0.5, 10);
                   break;
+                case 3: FIRE_COOLING = smartIncr(FIRE_COOLING, -10, 20, 100);
+                  break;
               }
               break;
             case 7: MAX_COEF_FREQ = smartIncrFloat(MAX_COEF_FREQ, -0.1, 0.0, 10);
@@ -956,7 +994,9 @@ void remoteTick() {
                 case 1: COLOR_SPEED = smartIncr(COLOR_SPEED, -10, 0, 255);
                   break;
                 case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, -1, -20, 20);
-                  break;
+                  break;             
+                case 3: FIRE_SPARKING = smartIncr(FIRE_SPARKING, -10, 50, 200);
+                  break; 
               }
               break;
             case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, -10, 1, 255);
@@ -990,6 +1030,8 @@ void remoteTick() {
                   break;
                 case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, 1, -20, 20);
                   break;
+                case 3: FIRE_SPARKING = smartIncr(FIRE_SPARKING, 10, 50, 200);
+                  break;  
               }
               break;
             case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, 10, 1, 255);
@@ -1092,6 +1134,8 @@ void updateEEPROM() {
   EEPROM.updateInt(56, HUE_STEP);
   EEPROM.updateInt(60, EMPTY_BRIGHT);
   if (KEEP_STATE) EEPROM.updateByte(64, ONstate);
+  EEPROM.updateInt(68, FIRE_SPARKING);
+  EEPROM.updateInt(72, FIRE_COOLING);
 }
 void readEEPROM() {
   this_mode = EEPROM.readByte(1);
@@ -1113,6 +1157,8 @@ void readEEPROM() {
   HUE_STEP = EEPROM.readInt(56);
   EMPTY_BRIGHT = EEPROM.readInt(60);
   if (KEEP_STATE) ONstate = EEPROM.readByte(64);
+  FIRE_SPARKING = EEPROM.readInt(68);
+  FIRE_COOLING = EEPROM.readInt(72);
 }
 void eepromTick() {
   if (eeprom_flag)

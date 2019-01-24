@@ -356,11 +356,7 @@ $Form.controls.AddRange(@($btn_power,$btn_calibrate,$Groupbox1,$Groupbox2,$Group
 $Groupbox1.controls.AddRange(@($btn_volume_gradient,$btn_volume_rainbow))
 $Groupbox2.controls.AddRange(@($Label2,$btn_bright_inc,$btn_bright_dec,$btn_back_dec,$btn_back_inc,$btn_left,$btn_right,$btn_down,$btn_up,$Label1,$label_lr,$label_ud))
 $Groupbox3.controls.AddRange(@($btn_color_5,$btn_color_3,$btn_color_1,$btn_color_run,$btn_analyze))
-$Groupbox4.controls.AddRange(@($btn_const,$btn_const_grad,$btn_const_rainbow,$btn_const_strobo))
-<# 
-На будущее - режим с огнём
 $Groupbox4.controls.AddRange(@($btn_const,$btn_const_grad,$btn_const_rainbow,$btn_const_wildfire,$btn_const_strobo))
-#>
 
 $label_lr.text = " "
 $btn_right.Enabled = $false
