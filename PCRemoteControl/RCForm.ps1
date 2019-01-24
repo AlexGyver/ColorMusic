@@ -129,7 +129,7 @@ $ErrorForm.controls.AddRange(@($ELabel2, $ELabel1, $LabelError, $EButton1))
     https://poshgui.com/editor/5c47451d742c2245c890cd9c
 #>
 $Form                            = New-Object system.Windows.Forms.Form
-$Form.ClientSize                 = '600,370'
+$Form.ClientSize                 = '605,370'
 $Form.text                       = "<Arduino> ColorMusic"
 $Form.TopMost                    = $false
 $Form.FormBorderStyle            = 'Fixed3D'
@@ -280,7 +280,7 @@ $Groupbox1.location              = New-Object System.Drawing.Point(10,60)
 
 $Groupbox2                       = New-Object system.Windows.Forms.Groupbox
 $Groupbox2.height                = 301
-$Groupbox2.width                 = 203
+$Groupbox2.width                 = 235
 $Groupbox2.Anchor                = 'top,right,bottom,left'
 $Groupbox2.text                  = "Настройки"
 $Groupbox2.location              = New-Object System.Drawing.Point(363,60)
@@ -297,7 +297,7 @@ $Label1.Font                     = 'Microsoft Sans Serif,10'
 $label_lr                        = New-Object system.Windows.Forms.Label
 $label_lr.text                   = "LR"
 $label_lr.AutoSize               = $false
-$label_lr.width                  = 112
+$label_lr.width                  = 140
 $label_lr.height                 = 18
 $label_lr.Anchor                 = 'top,right,left'
 $label_lr.location               = New-Object System.Drawing.Point(82,105)
@@ -312,7 +312,7 @@ $Groupbox3.location              = New-Object System.Drawing.Point(10,143)
 $label_ud                        = New-Object system.Windows.Forms.Label
 $label_ud.text                   = "UD"
 $label_ud.AutoSize               = $false
-$label_ud.width                  = 112
+$label_ud.width                  = 140
 $label_ud.height                 = 18
 $label_ud.Anchor                 = 'top,right,left'
 $label_ud.location               = New-Object System.Drawing.Point(82,141)
