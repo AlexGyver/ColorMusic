@@ -7,6 +7,12 @@ Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
 <#
+ # Название нашего Arduino-устройства, которое мы ищем в ответе команды handshake
+ # @var string
+ #>
+$deviceName = "ColorMusic"
+
+<#
  # Найдено ли Arduino-устройство
  # @var bool
  #>
@@ -52,8 +58,8 @@ foreach ($port in $query){
                 Write-host "Next answer:" $hello
             }
 
-            # Если нашли название ColorMusic, то это наше Arduino
-            if($hello -match "ColorMusic"){
+            # Если получили в ответ нужное название, то это наш Arduino
+            if($hello -match $deviceName){
                 Write-host "Device found"
                 $devFound = $true
                 break
@@ -71,58 +77,73 @@ foreach ($port in $query){
     if($arduino.isOpen){
         $arduino.close()
     }
-}        
+}    
         
-<#  Форма с ошибкой  #>
+<# 
+    Форма с ошибкой в стиле Windows
+    https://poshgui.com/editor/5c4b729ac417d926b8555161
+#>
 $ErrorForm                       = New-Object system.Windows.Forms.Form
-$ErrorForm.ClientSize            = '463,120'
-$ErrorForm.text                  = "Error"
+$ErrorForm.ClientSize            = '350,170'
+$ErrorForm.text                  = "Ошибка"
+$ErrorForm.BackColor             = "#ffffff"
 $ErrorForm.TopMost               = $false
 $ErrorForm.FormBorderStyle       = 'Fixed3D'
 $ErrorForm.MaximizeBox           = $false
 $ErrorForm.MinimizeBox           = $false
 
-$ELabel1                          = New-Object system.Windows.Forms.Label
-$ELabel1.text                     = " "
-$ELabel1.BackColor                = "#ff0000"
-$ELabel1.AutoSize                 = $false
-$ELabel1.width                    = 39
-$ELabel1.height                   = 41
-$ELabel1.location                 = New-Object System.Drawing.Point(24,33)
-$ELabel1.Font                     = 'Microsoft Sans Serif,10,style=Bold'
-$ELabel1.ForeColor                = "#ffffff"
+$ErrorIcon                       = New-Object system.Windows.Forms.PictureBox
+$ErrorIcon.width                 = 32
+$ErrorIcon.height                = 32
+$ErrorIcon.location              = New-Object System.Drawing.Point(15,15)
+$ErrorIcon.SizeMode              = [System.Windows.Forms.PictureBoxSizeMode]::zoom
+# Закодированная в Base64 иконка
+$base64ImageString = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjEuNWRHWFIAAAEYSURBVEhLtZNNCsIwEEZzlNzccwhuegCXxaUIHqNVJxNakmZ+voEa3sJu+r4XavqGzvtSiJygYMqFyIkIaPstFSIREcGUP/dEhCJgAc9fnoVQBCzg+curEIrABPt8FoQiMEEzv4JHAILD/AocAQiG+RUwwhOI8ytYhCdQ5leQCFMwzK9nf0QiTMEw/ygAInSBdPujwI3QBdLtCwIvQhFI8wlRYEcoAuXjkQVmhCRQ5hOawIiQBPq3rwr0iEGgzycMgRYxCMy/riVQInqBOZ+wBWJELzDnE45AimgE3nyIIaIRePNBDhGbAJvvXlGhj9gE2HxI0Eew4JTbb2kiWHDS7bfsEey5pnVO6+NU5kSvpZezh379iSn/AEa8ZdiowHAjAAAAAElFTkSuQmCC"
+$imageBytes = [Convert]::FromBase64String($base64ImageString)
+$ms = New-Object IO.MemoryStream($imageBytes, 0, $imageBytes.Length)
+$ms.Write($imageBytes, 0, $imageBytes.Length);
+$ErrorIcon.Image =  [System.Drawing.Image]::FromStream($ms, $true)
 
-$ELabel2                          = New-Object system.Windows.Forms.Label
-$ELabel2.text                     = "X"
-$ELabel2.AutoSize                 = $true
-$ELabel2.width                    = 25
-$ELabel2.height                   = 10
-$ELabel2.location                 = New-Object System.Drawing.Point(30,37)
-$ELabel2.Font                     = 'Microsoft Sans Serif,20,style=Bold'
-$ELabel2.ForeColor                = "#ffffff"
-$ELabel2.BackColor                = "#ff0000"
+$ErrorBottomPanel                = New-Object system.Windows.Forms.Panel
+$ErrorBottomPanel.height         = 40
+$ErrorBottomPanel.width          = 350
+$ErrorBottomPanel.BackColor      = "#f0f0f0"
+$ErrorBottomPanel.Anchor         = 'right,bottom,left'
+$ErrorBottomPanel.location       = New-Object System.Drawing.Point(0,130)
 
-$LabelError                      = New-Object system.Windows.Forms.Label
-$LabelError.text                 = "Ошибка: не найдено устройство для удалённого управления!"
-$LabelError.AutoSize             = $false
-$LabelError.width                = 360
-$LabelError.height               = 42
-$LabelError.Anchor               = 'top,right,left'
-$LabelError.location             = New-Object System.Drawing.Point(78,34)
-$LabelError.Font                 = 'Microsoft Sans Serif,10'
+$ErrorButtonOK                   = New-Object system.Windows.Forms.Button
+$ErrorButtonOK.text              = "OK"
+$ErrorButtonOK.width             = 60
+$ErrorButtonOK.height            = 23
+$ErrorButtonOK.Anchor            = 'right,bottom'
+$ErrorButtonOK.location          = New-Object System.Drawing.Point(278,9)
+$ErrorButtonOK.Font              = 'Microsoft Sans Serif,10'
 
-$EButton1                         = New-Object system.Windows.Forms.Button
-$EButton1.text                    = "OK"
-$EButton1.width                   = 60
-$EButton1.height                  = 30
-$EButton1.location                = New-Object System.Drawing.Point(393,85)
-$EButton1.Font                    = 'Microsoft Sans Serif,10'
+$ErrorTitleLabel                 = New-Object system.Windows.Forms.Label
+$ErrorTitleLabel.text            = "Не найдено устройство"
+$ErrorTitleLabel.AutoSize        = $true
+$ErrorTitleLabel.width           = 271
+$ErrorTitleLabel.height          = 22
+$ErrorTitleLabel.Anchor          = 'top,right,left'
+$ErrorTitleLabel.location        = New-Object System.Drawing.Point(65,10)
+$ErrorTitleLabel.Font            = 'Calibri,16'
+$ErrorTitleLabel.ForeColor       = "#003399"
 
-$EButton1.Add_Click({  
+$ErrorLabelDescription           = New-Object system.Windows.Forms.Label
+$ErrorLabelDescription.text      = "Проверьте, подключено ли Arduino '$deviceName' и не занят ли COM порт другой программой"
+$ErrorLabelDescription.AutoSize  = $false
+$ErrorLabelDescription.width     = 270
+$ErrorLabelDescription.height    = 70
+$ErrorLabelDescription.Anchor    = 'top,right,bottom,left'
+$ErrorLabelDescription.location  = New-Object System.Drawing.Point(65,50)
+$ErrorLabelDescription.Font      = 'Microsoft Sans Serif,10'
+
+$ErrorForm.controls.AddRange(@($ErrorIcon,$ErrorBottomPanel,$ErrorTitleLabel,$ErrorLabelDescription))
+$ErrorBottomPanel.controls.AddRange(@($ErrorButtonOK))
+
+$ErrorButtonOK.Add_Click({ 
     $ErrorForm.close()
 })
-
-$ErrorForm.controls.AddRange(@($ELabel2, $ELabel1, $LabelError, $EButton1))
 
 <# 
     Форма для управления цветомузыкой
