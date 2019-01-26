@@ -14,7 +14,7 @@
 // ***************************** НАСТРОЙКИ *****************************
 
 // ----- настройка ИК пульта
-#define REMOTE_TYPE 1       // 0 - без пульта, 1 - пульт от WAVGAT, 2 - пульт от KEYES, 3 - кастомный пульт
+#define REMOTE_TYPE 4       // 0 - без пульта, 1 - пульт от WAVGAT, 2 - пульт от KEYES, 3 - кастомный пульт, 4 - управление с ПК
 // система может работать С ЛЮБЫМ ИК ПУЛЬТОМ (практически). Коды для своего пульта можно задать начиная со строки 160 в прошивке. Коды пультов определяются скетчем IRtest_2.0, читай инструкцию
 
 // ----- настройки параметров
@@ -114,6 +114,16 @@ byte HUE_STEP = 5;
   HUE_PINK
 */
 
+// ---- Режим огня ----
+// COOLING/Охлаждение: Насколько воздух охлаждается
+// Меньше охлаждение - выше пламя и наоборот
+// Default 50, suggested range 20-100 
+byte FIRE_COOLING = 50;
+
+// SPARKING: Какова вероятность появления искры
+// Default 120, suggested range 50-200.
+byte FIRE_SPARKING = 120;
+
 // ----- КНОПКИ ПУЛЬТА WAVGAT -----
 #if REMOTE_TYPE == 1
 #define BUTT_UP     0xF39EEBAD
@@ -158,6 +168,29 @@ byte HUE_STEP = 5;
 
 // ----- КНОПКИ СВОЕГО ПУЛЬТА -----
 #if REMOTE_TYPE == 3
+#define BUTT_UP     0xE51CA6AD
+#define BUTT_DOWN   0xD22353AD
+#define BUTT_LEFT   0x517068AD
+#define BUTT_RIGHT  0xAC2A56AD
+#define BUTT_OK     0x1B92DDAD
+#define BUTT_1      0x68E456AD
+#define BUTT_2      0xF08A26AD
+#define BUTT_3      0x151CD6AD
+#define BUTT_4      0x18319BAD
+#define BUTT_5      0xF39EEBAD
+#define BUTT_6      0x4AABDFAD
+#define BUTT_7      0xE25410AD
+#define BUTT_8      0x297C76AD
+#define BUTT_9      0x14CE54AD
+#define BUTT_0      0xC089F6AD
+#define BUTT_STAR   0xAF3F1BAD  // *
+#define BUTT_HASH   0x38379AD   // #
+#endif
+
+// ----- Управление командами с ПК ----- 
+// В общем-то не важно, какой код будет у кнопок
+#if REMOTE_TYPE == 4
+#include <CommandLine.h>
 #define BUTT_UP     0xE51CA6AD
 #define BUTT_DOWN   0xD22353AD
 #define BUTT_LEFT   0x517068AD
@@ -305,6 +338,10 @@ void setup() {
       readEEPROM();
     }
   }
+
+  #if REMOTE_TYPE == 4
+    Serial.println("ColorMusic is ready"); // Приветствие в консоль
+  #endif
 }
 
 void loop() {
@@ -582,6 +619,30 @@ void animation() {
             if (rainbow_steps < 0) rainbow_steps = 255;
           }
           break;
+
+        case 3:
+          static byte heat[NUM_LEDS];
+          // Step 1.  Cool down every cell a little
+          for( int i = 0; i < NUM_LEDS; i++) {
+            heat[i] = qsub8( heat[i],  random8(0, ((FIRE_COOLING * 10) / NUM_LEDS) + 2));
+          }
+          // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+          for( int k= NUM_LEDS - 1; k >= 2; k--) {
+            heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+          }
+          // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+          if( random8() < FIRE_SPARKING ) {
+            int y = random8(7);
+            heat[y] = qadd8( heat[y], random8(160,255) );
+          }
+          // Step 4.  Map from heat cells to LED colors
+          for( int j = 0; j < NUM_LEDS/*/2*/; j++) {
+            CRGB color = HeatColor( heat[j]);
+            int pixelnumber;
+            pixelnumber = j;
+            leds[pixelnumber] = color;
+          }
+          break;
       }
       break;
     case 7:
@@ -656,11 +717,152 @@ float smartIncrFloat(float value, float incr_step, float mininmum, float maximum
 
 #if REMOTE_TYPE != 0
 void remoteTick() {
+  
+  #if REMOTE_TYPE != 4
+  // Управление с пульта
   if (IRLremote.available())  {
     auto data = IRLremote.read();
     IRdata = data.command;
     ir_flag = true;
   }
+  #else
+  // Управление с ПК
+  ir_flag = hasCommand();
+  if(ir_flag){
+    const char *cmdName = getCommand();
+    IRdata = -1;
+    
+    // mode {mode_№} - изменение режима
+    if(strcmp(cmdName, "mode") == 0){
+      int mode = getArgInt();
+
+      if(mode > 0 && mode <= MODE_AMOUNT){
+        this_mode = mode-1;
+      }
+
+      Serial.print("Current mode: ");
+      Serial.println(mode);
+    }
+
+    // submode - изменение подрежима, имитируем нажатие кнопки #
+    else if(strcmp(cmdName, "submode") == 0){
+      IRdata = BUTT_HASH;
+      Serial.println("Submode changed");
+    }
+
+    // calibrate - калибровка шума, имитируем нажатие на кнопку 0
+    else if (0 == strcmp(cmdName, "calibrate")){
+      IRdata = BUTT_0;
+      Serial.println("Noise calibrated");
+    } 
+
+    // power - вкл/выкл ленты, имитируем нажатие на *
+    else if (0 == strcmp(cmdName, "power")){
+      IRdata = BUTT_STAR;
+      if(ONstate){
+        Serial.println("LEDs off");
+      } else {
+        Serial.println("LEDs on");
+      }
+    }
+
+    // bright+ - увеличение яркости горящих диодов
+    else if (0 == strcmp(cmdName, "bright+")){
+      BRIGHTNESS = smartIncr(BRIGHTNESS, 10, 0, 255); 
+      FastLED.setBrightness(BRIGHTNESS);
+      cmdName = "bright";
+    }
+
+    // bright- - уменьшение яркости горящих диодов
+    else if (0 == strcmp(cmdName, "bright-")){
+      BRIGHTNESS = smartIncr(BRIGHTNESS, -10, 0, 255); 
+      FastLED.setBrightness(BRIGHTNESS);
+      cmdName = "bright";
+    }
+
+    // bright {bright_level} - изменение уровня яркости горящих диодов
+    // bright - без аргумента показывает текущий уровень яркости
+    else if (0 == strcmp(cmdName, "bright")){
+      int level = getArgInt();
+      if(level > 0 && level <= 255){     
+        BRIGHTNESS  = level;
+        FastLED.setBrightness(BRIGHTNESS);
+        Serial.print("Brightness changed to: ");
+        Serial.println(BRIGHTNESS);
+      } else {
+        Serial.print("Current brightness: ");
+        Serial.println(BRIGHTNESS);
+      }
+    }
+
+    // backlight+ - увеличение яркости негорящих светодиодов
+    else if (0 == strcmp(cmdName, "backlight+")){
+      EMPTY_BRIGHT = smartIncr(EMPTY_BRIGHT, 5, 0, 255); 
+      cmdName = "backlight";
+    }      
+
+    // backlight- - уменьшение яркости негорящих светодиодов
+    else if (0 == strcmp(cmdName, "backlight-")){
+      EMPTY_BRIGHT = smartIncr(EMPTY_BRIGHT, -5, 0, 255); 
+      cmdName = "backlight";
+    }
+      
+    // backlight {bright_level} - изменение яркости негорящих светодиодов
+    // backlight - без аргумента - текущий уровень фоновой подсветки
+    else if (0 == strcmp(cmdName, "backlight")){
+      int level = getArgInt();
+      if(level > 0 && level <= 255){
+        EMPTY_BRIGHT = level;
+        Serial.print("Backlight brightness changed to: ");
+        Serial.println(EMPTY_BRIGHT);
+      } else {
+        Serial.print("Current backlight brightness: ");
+        Serial.println(EMPTY_BRIGHT);
+      }
+    }
+    
+    // lightmode {mode_№} - изменение подрежима у режима №7 (постоянная подсветка)
+    else if (0 == strcmp(cmdName, "lightmode")){
+      int mode = getArgInt();
+      light_mode = mode;
+
+      Serial.print("Current light mode: ");
+      Serial.println(light_mode);
+    } 
+
+    // Команды для настройки, кнопки вверх, вниз, влево, вправо - up, down, left, right соответственно
+    else if (0 == strcmp(cmdName, "up")){
+      settings_mode = false;
+      IRdata = BUTT_UP;
+    }      
+    else if (0 == strcmp(cmdName, "down")){
+      settings_mode = false;
+      IRdata = BUTT_DOWN;
+    }      
+    else if (0 == strcmp(cmdName, "left")){
+      settings_mode = false;
+      IRdata = BUTT_LEFT;
+    }      
+    else if (0 == strcmp(cmdName, "right")){
+      settings_mode = false;
+      IRdata = BUTT_RIGHT;
+    }  
+
+    // handshake - "рукопожатие", устройство должно вернуть своё название, чтоб программа смогла найти "своё" Arduino для управления
+    else if (0 == strcmp(cmdName, "handshake")){
+      Serial.println("<Arduino> ColorMusic");
+    } 
+
+    // Обработка неподдерживаемых команд
+    else {
+      Serial.print("Invalid command '");
+      Serial.print(cmdName);
+      Serial.println("'");
+    }
+      
+  }
+  #endif
+ 
   if (ir_flag) { // если данные пришли
     eeprom_timer = millis();
     eeprom_flag = true;
@@ -693,7 +895,7 @@ void remoteTick() {
           case 4:
           case 7: if (++freq_strobe_mode > 3) freq_strobe_mode = 0;
             break;
-          case 6: if (++light_mode > 2) light_mode = 0;
+          case 6: if (++light_mode > 3) light_mode = 0;
             break;
         }
         break;
@@ -723,6 +925,8 @@ void remoteTick() {
                   break;
                 case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, 0.5, 0.5, 10);
                   break;
+                case 3: FIRE_COOLING = smartIncr(FIRE_COOLING, 10, 20, 100);
+                  break; 
               }
               break;
             case 7: MAX_COEF_FREQ = smartIncrFloat(MAX_COEF_FREQ, 0.1, 0.0, 10);
@@ -756,6 +960,8 @@ void remoteTick() {
                   break;
                 case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, -0.5, 0.5, 10);
                   break;
+                case 3: FIRE_COOLING = smartIncr(FIRE_COOLING, -10, 20, 100);
+                  break;
               }
               break;
             case 7: MAX_COEF_FREQ = smartIncrFloat(MAX_COEF_FREQ, -0.1, 0.0, 10);
@@ -788,7 +994,9 @@ void remoteTick() {
                 case 1: COLOR_SPEED = smartIncr(COLOR_SPEED, -10, 0, 255);
                   break;
                 case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, -1, -20, 20);
-                  break;
+                  break;             
+                case 3: FIRE_SPARKING = smartIncr(FIRE_SPARKING, -10, 50, 200);
+                  break; 
               }
               break;
             case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, -10, 1, 255);
@@ -822,6 +1030,8 @@ void remoteTick() {
                   break;
                 case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, 1, -20, 20);
                   break;
+                case 3: FIRE_SPARKING = smartIncr(FIRE_SPARKING, 10, 50, 200);
+                  break;  
               }
               break;
             case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, 10, 1, 255);
@@ -830,6 +1040,9 @@ void remoteTick() {
               break;
           }
         }
+        break;
+      case -1: // кейс для управление с ПК, когда нужно сохранить настройки
+        eeprom_flag = true;
         break;
       default: eeprom_flag = false;   // если не распознали кнопку, не обновляем настройки!
         break;
@@ -921,6 +1134,8 @@ void updateEEPROM() {
   EEPROM.updateInt(56, HUE_STEP);
   EEPROM.updateInt(60, EMPTY_BRIGHT);
   if (KEEP_STATE) EEPROM.updateByte(64, ONstate);
+  EEPROM.updateInt(68, FIRE_SPARKING);
+  EEPROM.updateInt(72, FIRE_COOLING);
 }
 void readEEPROM() {
   this_mode = EEPROM.readByte(1);
@@ -942,6 +1157,8 @@ void readEEPROM() {
   HUE_STEP = EEPROM.readInt(56);
   EMPTY_BRIGHT = EEPROM.readInt(60);
   if (KEEP_STATE) ONstate = EEPROM.readByte(64);
+  FIRE_SPARKING = EEPROM.readInt(68);
+  FIRE_COOLING = EEPROM.readInt(72);
 }
 void eepromTick() {
   if (eeprom_flag)
