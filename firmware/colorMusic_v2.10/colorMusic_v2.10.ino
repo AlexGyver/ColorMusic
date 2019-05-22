@@ -11,8 +11,8 @@
 */
 
 /*
-   Версия 2.9
-   Добавлен режим вывода всех настроек в порт SETTINGS_LOG
+   Версия 2.10
+   Исправлен глюк с большим количеством светодиодов на МЕГЕ
 */
 
 
@@ -217,13 +217,13 @@ DEFINE_GRADIENT_PALETTE(soundlevel_gp) {
 };
 CRGBPalette32 myPal = soundlevel_gp;
 
-byte Rlenght, Llenght;
+int Rlenght, Llenght;
 float RsoundLevel, RsoundLevel_f;
 float LsoundLevel, LsoundLevel_f;
 
 float averageLevel = 50;
 int maxLevel = 100;
-byte MAX_CH = NUM_LEDS / 2;
+int MAX_CH = NUM_LEDS / 2;
 int hue;
 unsigned long main_timer, hue_timer, strobe_timer, running_timer, color_timer, rainbow_timer, eeprom_timer;
 float averK = 0.006;
@@ -636,7 +636,7 @@ void animation() {
       leds[(NUM_LEDS / 2) - 1] = leds[NUM_LEDS / 2];
       if (millis() - running_timer > RUNNING_SPEED) {
         running_timer = millis();
-        for (byte i = 0; i < NUM_LEDS / 2 - 1; i++) {
+        for (int i = 0; i < NUM_LEDS / 2 - 1; i++) {
           leds[i] = leds[i + 1];
           leds[NUM_LEDS - i - 1] = leds[i];
         }
@@ -644,7 +644,7 @@ void animation() {
       break;
     case 8:
       byte HUEindex = HUE_START;
-      for (byte i = 0; i < NUM_LEDS / 2; i++) {
+      for (int i = 0; i < NUM_LEDS / 2; i++) {
         byte this_bright = map(freq_f[(int)floor((NUM_LEDS / 2 - i) / freq_to_stripe)], 0, freq_max_f, 0, 255);
         this_bright = constrain(this_bright, 0, 255);
         leds[i] = CHSV(HUEindex, 255, this_bright);
