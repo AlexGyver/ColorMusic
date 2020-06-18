@@ -303,6 +303,8 @@ void setup() {
 
   // в 100 ячейке хранится число 100. Если нет - значит это первый запуск системы
   if (KEEP_SETTINGS) {
+    eeprom_timer = millis();
+    eeprom_flag = false;
     if (EEPROM.read(100) != 100) {
       //Serial.println(F("First start"));
       EEPROM.write(100, 100);
@@ -340,8 +342,12 @@ void loop() {
 #if REMOTE_TYPE != 0
   remoteTick();     // опрос ИК пульта
 #endif
+
   mainLoop();       // главный цикл обработки и отрисовки
+
+#if KEEP_SETTINGS
   eepromTick();     // проверка не пора ли сохранить настройки
+#endif
 }
 
 void mainLoop() {
@@ -911,8 +917,11 @@ void analyzeAudio() {
 
 void buttonTick() {
   butt1.tick();  // обязательная функция отработки. Должна постоянно опрашиваться
-  if (butt1.isSingle())                              // если единичное нажатие
+  if (butt1.isSingle()){                              // если единичное нажатие
     if (++this_mode >= MODE_AMOUNT) this_mode = 0;   // изменить режим
+    eeprom_timer = millis();
+    eeprom_flag = true;
+  }
 
   if (butt1.isHolded()) {     // кнопка удержана
     fullLowPass();
