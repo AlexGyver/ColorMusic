@@ -19,7 +19,7 @@
 // ***************************** НАСТРОЙКИ *****************************
 
 // ----- настройка ИК пульта
-#define REMOTE_TYPE 1       // 0 - без пульта, 1 - пульт от WAVGAT, 2 - пульт от KEYES, 3 - кастомный пульт
+#define REMOTE_TYPE 3       // 0 - без пульта, 1 - пульт от WAVGAT, 2 - пульт от KEYES, 3 - кастомный пульт
 // система может работать С ЛЮБЫМ ИК ПУЛЬТОМ (практически). Коды для своего пульта можно задать начиная со строки 160 в прошивке. Коды пультов определяются скетчем IRtest_2.0, читай инструкцию
 
 // ----- настройки параметров
@@ -30,13 +30,13 @@
 
 // ----- настройки ленты
 #define NUM_LEDS 60        // количество светодиодов (данная версия поддерживает до 410 штук)
-#define CURRENT_LIMIT 3000  // лимит по току в МИЛЛИАМПЕРАХ, автоматически управляет яркостью (пожалей свой блок питания!) 0 - выключить лимит
-byte BRIGHTNESS = 200;      // яркость по умолчанию (0 - 255)
+#define CURRENT_LIMIT 0  // лимит по току в МИЛЛИАМПЕРАХ, автоматически управляет яркостью (пожалей свой блок питания!) 0 - выключить лимит
+byte BRIGHTNESS = 255;      // яркость по умолчанию (0 - 255)
 
 // ----- пины подключения
-#define SOUND_R A2         // аналоговый пин вход аудио, правый канал
-#define SOUND_L A1         // аналоговый пин вход аудио, левый канал
-#define SOUND_R_FREQ A3    // аналоговый пин вход аудио для режима с частотами (через кондер)
+#define SOUND_R A2         // аналоговый пин вход аудио, правый канал2
+#define SOUND_L A1         // аналоговый пин вход аудио, левый канал1
+#define SOUND_R_FREQ A4    // аналоговый пин вход аудио для режима с частотами (через кондер)
 #define BTN_PIN 3          // кнопка переключения режимов (PIN --- КНОПКА --- GND)
 
 #if defined(__AVR_ATmega32U4__) // Пины для Arduino Pro Micro (смотри схему для Pro Micro на странице проекта!!!)
@@ -62,7 +62,7 @@ float RAINBOW_STEP = 5.00;         // шаг изменения цвета ра�
 // ----- сигнал
 #define MONO 1                    // 1 - только один канал (ПРАВЫЙ!!!!! SOUND_R!!!!!), 0 - два канала
 #define EXP 1.4                   // степень усиления сигнала (для более "резкой" работы) (по умолчанию 1.4)
-#define POTENT 0                  // 1 - используем потенциометр, 0 - используется внутренний источник опорного напряжения 1.1 В
+#define POTENT 1                  // 1 - используем потенциометр, 0 - используется внутренний источник опорного напряжения 1.1 В
 byte EMPTY_BRIGHT = 30;           // яркость "не горящих" светодиодов (0 - 255)
 #define EMPTY_COLOR HUE_PURPLE    // цвет "не горящих" светодиодов. Будет чёрный, если яркость 0
 
@@ -107,6 +107,12 @@ byte RUNNING_SPEED = 11;
 byte HUE_START = 0;
 byte HUE_STEP = 5;
 #define LIGHT_SMOOTH 2
+
+
+// effects
+int thisdelay = 20;
+int thishue = 20;
+
 
 /*
   Цвета для HSV
@@ -164,23 +170,23 @@ byte HUE_STEP = 5;
 
 // ----- КНОПКИ СВОЕГО ПУЛЬТА -----
 #if REMOTE_TYPE == 3
-#define BUTT_UP     0xE51CA6AD
-#define BUTT_DOWN   0xD22353AD
-#define BUTT_LEFT   0x517068AD
-#define BUTT_RIGHT  0xAC2A56AD
-#define BUTT_OK     0x1B92DDAD
-#define BUTT_1      0x68E456AD
-#define BUTT_2      0xF08A26AD
-#define BUTT_3      0x151CD6AD
-#define BUTT_4      0x18319BAD
-#define BUTT_5      0xF39EEBAD
-#define BUTT_6      0x4AABDFAD
-#define BUTT_7      0xE25410AD
-#define BUTT_8      0x297C76AD
-#define BUTT_9      0x14CE54AD
-#define BUTT_0      0xC089F6AD
-#define BUTT_STAR   0xAF3F1BAD  // *
-#define BUTT_HASH   0x38379AD   // #
+#define BUTT_UP     0xAC2A56AD
+#define BUTT_DOWN   0x1B92DDAD
+#define BUTT_LEFT   0xDF3F4BAD
+#define BUTT_RIGHT  0xD22353AD
+#define BUTT_OK     0x517068AD
+#define BUTT_1      0x18319BAD
+#define BUTT_2      0xF39EEBAD
+#define BUTT_3      0x4AABDFAD
+#define BUTT_4      0xE25410AD
+#define BUTT_5      0x297C76AD
+#define BUTT_6      0x14CE54AD
+#define BUTT_7      0xAF3F1BAD
+#define BUTT_8      0xC089F6AD
+#define BUTT_9      0x38379AD
+#define BUTT_0      0x5484B6AD // eq
+#define BUTT_STAR   0xF08A26AD  // * rpt
+#define BUTT_HASH   0x151CD6AD   // # u/sd
 #endif
 
 
@@ -226,6 +232,8 @@ int maxLevel = 100;
 int MAX_CH = NUM_LEDS / 2;
 int hue;
 unsigned long main_timer, hue_timer, strobe_timer, running_timer, color_timer, rainbow_timer, eeprom_timer;
+unsigned long policeTimer = 0;
+byte policeSpeed = 60;
 float averK = 0.006;
 byte count;
 float index = (float)255 / MAX_CH;   // коэффициент перевода для палитры
@@ -610,6 +618,44 @@ void animation() {
             if (rainbow_steps < 0) rainbow_steps = 255;
           }
           break;
+        case 3:
+          for (int i = NUM_LEDS / 2; i < NUM_LEDS; i++) leds[i] = CRGB(0, 0, 0);
+          police();
+          break;
+        case 4:
+          for (int i = 0; i < NUM_LEDS; i++) leds[i] = CRGB(0, 0, 0);
+          police2();
+          break;
+        case 5:
+          color_bounce();          
+          break;
+        case 6:
+          color_bounceFADE();
+          break;
+        case 7:
+          ems_lightsONE();
+          break;
+        case 8:
+          rgb_propeller();
+          break;
+        case 9:
+          random_color_pop();
+          break;
+        case 10:
+          pop_horizontal();
+          break;
+        case 11:
+          confetti();
+          break;
+        case 12:
+          Fire2012();
+          break;
+        case 13:
+          sinelon();
+          break;
+        case 14:
+          juggle();
+          break;
       }
       break;
     case 7:
@@ -655,6 +701,7 @@ void animation() {
       break;
   }
 }
+
 
 void HIGHS() {
   for (int i = 0; i < NUM_LEDS; i++) leds[i] = CHSV(HIGH_COLOR, 255, thisBright[2]);
@@ -721,7 +768,7 @@ void remoteTick() {
           case 4:
           case 7: if (++freq_strobe_mode > 3) freq_strobe_mode = 0;
             break;
-          case 6: if (++light_mode > 2) light_mode = 0;
+          case 6: if (++light_mode > 14) light_mode = 0;
             break;
         }
         break;
@@ -750,6 +797,36 @@ void remoteTick() {
                 case 1: LIGHT_SAT = smartIncr(LIGHT_SAT, 20, 0, 255);
                   break;
                 case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, 0.5, 0.5, 10);
+                  break;
+                case 3:
+                  if (policeSpeed < 500)policeSpeed = policeSpeed + 10;
+                  break;
+                case 4:
+                  if (policeSpeed < 500)policeSpeed = policeSpeed + 10;
+                  break;
+                case 5:
+                  thishue += 10;
+                  if (thishue >= 255)thishue = 0;
+                  break;
+                case 6:
+                  thishue += 10;
+                  if (thishue >= 255)thishue = 0;
+                  break;
+                case 7:
+                  thishue += 10;
+                  if (thishue >= 255)thishue = 0;
+                  break;
+                case 8:
+                  thishue += 10;
+                  if (thishue >= 255)thishue = 0;
+                  break;
+                case 9:
+                  thishue += 10;
+                  if (thishue >= 255)thishue = 0;
+                  break;
+                case 10:
+                  thishue += 10;
+                  if (thishue >= 255)thishue = 0;
                   break;
               }
               break;
@@ -784,6 +861,42 @@ void remoteTick() {
                   break;
                 case 2: RAINBOW_STEP_2 = smartIncrFloat(RAINBOW_STEP_2, -0.5, 0.5, 10);
                   break;
+                case 3:
+                  if (policeSpeed > 20)policeSpeed = policeSpeed - 10;
+                  break;
+                case 4:
+                  if (policeSpeed > 20)policeSpeed = policeSpeed - 10;
+                  break;
+                case 5:
+                  thishue -= 10;
+                  if (thishue < 0)
+                    thishue = 255;
+                  break;
+                case 6:
+                  thishue -= 10;
+                  if (thishue < 0)
+                    thishue = 255;
+                  break;
+                case 7:
+                  thishue -= 10;
+                  if (thishue < 0)
+                    thishue = 255;
+                  break;
+                case 8:
+                  thishue -= 10;
+                  if (thishue < 0)
+                    thishue = 255;
+                  break;
+                case 9:
+                  thishue -= 10;
+                  if (thishue < 0)
+                    thishue = 255;
+                  break;
+                case 10:
+                  thishue -= 10;
+                  if (thishue < 0)
+                    thishue = 255;
+                  break;
               }
               break;
             case 7: MAX_COEF_FREQ = smartIncrFloat(MAX_COEF_FREQ, -0.1, 0.0, 10);
@@ -817,6 +930,35 @@ void remoteTick() {
                   break;
                 case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, -1, -20, 20);
                   break;
+                case 5:
+                  thisdelay -= 5;
+                  if (thisdelay > 70)thisdelay -= 10;
+                  if (thisdelay <= 5)thisdelay = 5;
+                  break;
+                case 6:
+                  thisdelay -= 5;
+                  if (thisdelay > 70)thisdelay -= 10;
+                  if (thisdelay <= 5)thisdelay = 5;
+                  break;
+                case 7:
+                  thisdelay -= 5;
+                  if (thisdelay > 70)thisdelay -= 10;
+                  if (thisdelay <= 5)thisdelay = 5;
+                  break;
+                case 8:
+                  thisdelay -= 5;
+                  if (thisdelay > 70)thisdelay -= 10;
+                  if (thisdelay <= 5)thisdelay = 5;
+                  break;
+                case 9:
+                  thisdelay -= 5;
+                  if (thisdelay > 70)thisdelay -= 10;
+                  if (thisdelay <= 5)thisdelay = 5;
+                  break;
+                case 10:
+                  thisdelay -= 10;
+                  if (thisdelay <= 10)thisdelay = 10;
+                  break;
               }
               break;
             case 7: RUNNING_SPEED = smartIncr(RUNNING_SPEED, -10, 1, 255);
@@ -849,6 +991,30 @@ void remoteTick() {
                 case 1: COLOR_SPEED = smartIncr(COLOR_SPEED, 10, 0, 255);
                   break;
                 case 2: RAINBOW_PERIOD = smartIncr(RAINBOW_PERIOD, 1, -20, 20);
+                  break;
+                case 5:
+                  thisdelay += 5;
+                  if (thisdelay >= 150)thisdelay = 150;
+                  break;
+                case 6:
+                  thisdelay += 5;
+                  if (thisdelay >= 150)thisdelay = 150;
+                  break;
+                case 7:
+                  thisdelay += 5;
+                  if (thisdelay >= 150)thisdelay = 150;
+                  break;
+                case 8:
+                  thisdelay += 5;
+                  if (thisdelay >= 150)thisdelay = 150;
+                  break;
+                case 9:
+                  thisdelay += 5;
+                  if (thisdelay >= 150)thisdelay = 150;
+                  break;
+                case 10:
+                  thisdelay += 10;
+                  if (thisdelay >= 200)thisdelay = 200;
                   break;
               }
               break;
