@@ -72,3 +72,6 @@ Because we don't have `+` and `-` buttons, our single button changes setting cyc
   * silence the music;
   * press the button five times;
   * the noise values will be written to the EEPROM and automatically read at every colormusic start up.
+
+## Problems
+[x] It is highly recommended to use 10kOhm - 45kOhm resistor between pin A2 and GND in schemes with microphone (see `schemes` folder).
