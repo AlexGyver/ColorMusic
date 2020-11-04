@@ -1,275 +1,73 @@
-![PROJECT_PHOTO](https://github.com/AlexGyver/ColorMusic/blob/master/proj_img.jpg)
-# Светомузыка на Arduino и WS2812b
-* [Описание проекта](#chapter-0)
-* [Папки проекта](#chapter-1)
-* [Схемы подключения](#chapter-2)
-* [Материалы и компоненты](#chapter-3)
-* [Как скачать и прошить](#chapter-4)
-* [FAQ](#chapter-5)
-* [Полезная информация](#chapter-6)
-[![AlexGyver YouTube](http://alexgyver.ru/git_banner.jpg)](https://www.youtube.com/channel/UCgtAOyEQdAyjvm9ATCi_Aig?sub_confirmation=1)
+## ColorMusic
 
-Версии прошивки
-* 15.03.2018, colorMusic_v1.1:
-	* Добавлена плавность режиму цветомузыки по частотам! Настройка SMOOTH_STEP
-	* Добавлен режим стробоскопа с целой кучей настроек!
-* 16.03.2018 colorMusic_v2.0:
-	* Добавлено управление с ИК пульта! Купить пульт можно по этой ссылке, цена вопроса 50р
-	* 7 режим - Режим подсветки
-	* 8 режим - Режим бегущих частот
-	* 9 режим - Анализатор спектра (Версия 2.1)
-	* У некоторых режимов появились подрежимы
-	* Возможна работа БЕЗ потенциометра. Читайте ниже в инструкции по эксплуатации
-* 18.03.2018 colorMusic_v2.2:
-	* Настройки сохраняются в память (энергонезависимую)
-* 19.03.2018 colorMusic_v2.3:
-	* Улучшена производительность, почищен мусор
-	* В 7 режиме радугу можно остановить и пустить вспять
-* 15.05.2018 colorMusic_v2.6:
-	* Изменена библиотека ИК пульта, пульт работает без глюков
-* 28.09.2018  colorMusic_v2.7 (by Евгений Зятьков):
-	* Настройка пульта внесена в скетч, тип пульта настраивается в IR_RCT
-	* Добавлена поддержка Arduino Mega и Pro Micro
-	* Исправлены мелкие баги
+It is Alex Gyver project: [ColorMusic](https://github.com/AlexGyver/ColorMusic).
+Almost everything is made by him. I just fixed some bugs and made little improvements.
+Find differences in [history.md](https://github.com/x3mEr/ColorMusic/history.md)
 
-<a id="chapter-0"></a>
-## Описание проекта
-Крутейшая свето- цветомузыка на Arduino и адресной светодиодной ленте WS2812b  
-Управление:
-- Однократное нажатие кнопки: смена режима
-- Удержание кнопки: калибровка нижнего порога шума
-
-Режимы работы (переключаются кнопкой):
-- VU meter (столбик громкости): от зелёного к красному
-- VU meter (столбик громкости): плавно бегущая радуга
-- Светомузыка по частотам: 5 полос симметрично
-- Светомузыка по частотам: 3 полосы
-- Светомузыка по частотам: 1 полоса
-- Стробоскоп (Версия 2.0)
-- Подсветка (Версия 2.0)
-- Бегущие частоты (Версия 2.0)
-- Анализатор спектра (Версия 2.1)
-
-Особенности:
-- Плавная анимация (можно настроить)
-- Автонастройка по громкости (можно настроить)
-- Фильтр нижнего шума (можно настроить)
-- Автокалибровка шума при запуске (можно настроить)
-- Поддержка стерео и моно звука (можно настроить)
-- Поддержка ИК пульта (Версия 2.0)
-- Лента не гаснет полностью (Версия 2.0)
-- Настройки сохраняются в памяти (Версия 2.2)
-- Подробности в видео: https://youtu.be/nu31By9Phdc
-
-<a id="chapter-1"></a>
-## Папки
-**ВНИМАНИЕ! Если это твой первый опыт работы с Arduino, читай [инструкцию](#chapter-4)**
-- **libraries** - библиотеки проекта. Заменить имеющиеся версии
-- **firmware** - прошивка для Arduino, нужный в папке открыть в Arduino IDE ([инструкция](#chapter-4))
-- **schemes** - схемы подключения
-
-<a id="chapter-2"></a>
-## Схемы
-### Обычная
-![SCHEME](https://github.com/AlexGyver/ColorMusic/blob/master/schemes/scheme2.jpg)
-### С микрофоном
-![SCHEME](https://github.com/AlexGyver/ColorMusic/blob/master/schemes/scheme3.jpg)
-
-<a id="chapter-3"></a>
-## Материалы и компоненты
-### Ссылки оставлены на магазины, с которых я закупаюсь уже не один год
-* Arduino NANO 328p – искать
-* https://ali.ski/tI7blh
-* https://ali.ski/O4yTxb
-* https://ali.ski/6_rFIS
-* https://ali.ski/gb92E-
-* Giant4 (Россия)
-* Адресная лента
-* https://ali.ski/crrqi1
-* https://ali.ski/2I3be
-* Купить в РФ, 60 свет/метр, 30 свет/метр
-* Black PCB / White PCB – цвет подложки ленты, чёрная / белая. В видео была чёрная
-* 1m/5m – длина ленты в метрах (чтобы заказать 2 метра, берите два заказа 1m, очевидно)
-* 30/60/74/96/100/144 – количество светодиодов на 1 метр ленты. В видео использовалась лента 60 диодов на метр
-* IP30 лента без влагозащиты (как на видео)
-* IP65 лента покрыта силиконом
-* IP67 лента полностью в силиконовом коробе
-* Постфикс ECO – лента чуть более низкого качества, меньше меди, на длинной ленте будет сильно проседать яркость
-* Лента как на видео: Black PCB 5m 60 IP30
-* Понижайка для автомобиля https://ali.ski/W8cC2
-* БП 5V Али искать (минимум 3A на каждые 100 LED)
-* https://ali.ski/DItEG
-* https://ali.ski/t3YFfU
-* Адаптер питания 5.5х2.1 https://ali.ski/C6YFu
-* Аудио гнездо https://ali.ski/RLsI0
-* Разветвитель наушников https://ali.ski/REM6Pg
-* ИК пульт (для версии 2.0 WAVGAT) https://ali.ski/uQJ7x
-* Звук через микрофон
-* Микрофон модуль https://ali.ski/QTC0S
-* Звук по FM радио
-* Передатчик FM http://ali.ski/29sic http://ali.ski/lklMs
-* Передатчик “сделай сам” http://ali.ski/YsmHW http://ali.ski/wmNkEX
-* Приёмник FM из видео http://ali.ski/VsnK0 http://ali.ski/uVp3_
-* Понижайка 3.3V http://ali.ski/ftSy1x http://ali.ski/acDEN
-* Приёмник “сделай сам” http://ali.ski/26e_Jh
-* Звук по Bluetooth
-* Передатчик Bluetooth http://ali.ski/_94Dig
-* Приёмник “свисток” http://ali.ski/Rkuyvl
-* Ещё приёмник http://ali.ski/QyigGj
-* Кнопки, конденсаторы и крутилки ищите в любых магазинах для радиолюбителей, так как у китайцев можно купить только мешок 50 штук!
-* Алик
-* Куча резисторов https://ali.ski/TAN2C
-* Куча кнопок https://ali.ski/VFH0N
-* Куча конденсаторов https://ali.ski/WNToC
-* Куча потенциометров (можно обойтись без него! Читайте инструкцию) http://ali.ski/fAJrzc
-* Куча конденсаторов для микрофона http://ali.ski/eqALT
-* ЧипДип (Россия)
-* Резистор https://www.chipdip.ru/product0/27226
-* Кнопка https://www.chipdip.ru/product/tyco-2-1825910-7-fsm14jh
-* Конденсатор 10нф https://www.chipdip.ru/product0/42179
-* Конденсатор для микрофона https://www.chipdip.ru/product0/9000261766
-* Потенциометр  (можно обойтись без него! Читайте инструкцию) https://www.chipdip.ru/product/r-0901n-b20k
-
-## Вам скорее всего пригодится
-* [Всё для пайки (паяльники и примочки)](http://alexgyver.ru/all-for-soldering/)
-* [Недорогие инструменты](http://alexgyver.ru/my_instruments/)
-* [Все существующие модули и сенсоры Arduino](http://alexgyver.ru/arduino_shop/)
-* [Электронные компоненты](http://alexgyver.ru/electronics/)
-* [Аккумуляторы и зарядные модули](http://alexgyver.ru/18650/)
-
-<a id="chapter-4"></a>
-## Как скачать и прошить
-* [Первые шаги с Arduino](http://alexgyver.ru/arduino-first/) - ультра подробная статья по началу работы с Ардуино, ознакомиться первым делом!
-* Скачать архив с проектом
-> На главной странице проекта (где ты читаешь этот текст) вверху справа зелёная кнопка **Clone or download**, вот её жми, там будет **Download ZIP**
-* Установить библиотеки в  
-`C:\Program Files (x86)\Arduino\libraries\` (Windows x64)  
-`C:\Program Files\Arduino\libraries\` (Windows x86)
-* Подключить Ардуино к компьютеру
-* Запустить файл прошивки (который имеет расширение .ino)
-* Настроить IDE (COM порт, модель Arduino, как в статье выше)
-* Настроить что нужно по проекту
-* Нажать загрузить
-* Пользоваться  
+*A lot of useful information (different schemes, components, explanation, videos) could be found [here](https://alexgyver.ru/colormusic/).*
 
 
-### Управление с ИК пульта:
-* Цифры (1 - 9) активируют режимы
-* Цифра 0: калибровка шума
-* Звёздочка (*): включить/выключить систему
-* Решётка (#): смена подрежима
-* Кнопка ОК: переключение между локальными и глобальными настройками)
-* Глобальные настройки (горит светодиод на плате):
-	* Влево/вправо: яркость
-* Локальные настройки (у каждого режима свои):
-	* 1 - Шкала громкости (градиент)
-		* Стрелки ← →: плавность анимации
-	* 2 - Шкала громкости (радуга)
-		* Стрелки ← →: плавность анимации
-		* Стрелки ↑ ↓: скорость радуги
-	* 3 - Цветомузыка (5 полос)
-		* Стрелки ← →: плавность анимации
-		* Стрелки ↑ ↓: чувствительность
-	* 4 - Цветомузыка (3 полосы)
-		* Стрелки ← →: плавность анимации
-		* Стрелки ↑ ↓: чувствительность
-	* 5 - Цветомузыка (1 полоса)
-		* Стрелки ← →: плавность анимации
-		* Стрелки ↑ ↓: чувствительность
-		* Подрежимы #: 3 частоты / низкие / средние / высокие
-	* 6 - Стробоскоп
-		* Стрелки ← →: плавность вспышек
-		* Стрелки ↑ ↓: частота вспышек
-	* 7 - Цветная подсветка
-		* Стрелки ← →: цвет
-		* Стрелки ↑ ↓: насыщенность
-	* 8 - “Бегущие частоты”
-		* Стрелки ← →: скорость
-		* Стрелки ↑ ↓: чувствительность
-		* Подрежимы #: 3 частоты / низкие / средние / высокие
-	* 9 - Анализатор спектра
-		* Стрелки ← →: шаг цвета
-		* Стрелки ↑ ↓: цвет
+## About
 
-### НАСТРОЙКА НИЖНЕГО ПОРОГА ШУМА (строки 65-71)
-- Ручная: выключаем AUTO_LOW_PASS и EEPROM_LOW_PASS, настраиваем LOW_PASS и SPEKTR_LOW_PASS вручную
-- При запуске: включаем AUTO_LOW_PASS. При подаче питания музыка должна стоять на паузе!
-- По кнопке: при удерживании кнопки 1 секунду настраивается нижний порог шума (музыку на паузу!)
-- Из памяти (ЛУЧШИЙ ВАРИАНТ): выключаем AUTO_LOW_PASS и включаем EEPROM_LOW_PASS
-  * Включаем систему
-  * Ставим музыку на паузу
-  * Удерживаем кнопку 1 секунду
-  * Значения шумов будут записаны в память и САМИ загружаться при последующем запуске! Всё!
+ColorMusic (individually addressable LED strip WS2812b) is driven by Arduino Nano v3.0 with ATmega328P.
 
-## Настройки в коде
-    // лента
-    #define NUM_LEDS 120        // количество светодиодов
-    #define BRIGHTNESS 230     // яркость (0 - 255)
-    
-    // пины
-    #define SOUND_R A2         // аналоговый пин вход аудио, правый канал
-    #define SOUND_L A1         // аналоговый пин вход аудио, левый канал
-    #define SOUND_R_FREQ A3    // аналоговый пин вход аудио для режима с частотами (через кондер)
-    #define BTN_PIN 3          // кнопка переключения режимов (PIN --- КНОПКА --- GND)
-    #define LED_PIN 12         // пин DI светодиодной ленты
-    #define POT_GND A0         // пин земля для потенциометра
+**Features:**
+- animation smoothness can be set up;
+- auto or manual setting of lower noise threshold;
+- auto volume adjustment;
+- support of stereo and mono input;
+- support of several popular IR remotes + one customizable;
+- all settings are stored in EEPROM...
+- 9 different effects:
+	0. VU meter: classical volume bar;
+	1. VU meter: smoothly running rainbow;
+	2. Colormusic by frequencies: 5 symmetrical bars (high-middle-low-middle-high);
+	3. Colormusic by frequencies: 3 bars (high-middle-low);
+	4. Colormusic by frequencies: 1 bar (the colors of the frequencies overlap each other);
+	5. Stroboscope with frequencies: 25 Hz (1500 BPM - trance music x10), 20 Hz (1200 BPM - dance music x10), 15 Hz (900 BPM), 10 Hz (600 BPM) and 5 Hz (300 BPM);
+	6. Backlight. This mode has 3 sub modes (could be programmed in advance or switched with IR remote):
+		1. constant color;
+		2. changing color;
+		3. running rainbow;
+	7. Running frequencies;
+	8. Spectrum Analyzer.
 
-    // настройки радуги
-    #define RAINBOW_SPEED 6    // скорость движения радуги (чем меньше число, тем быстрее радуга)
-    #define RAINBOW_STEP 6     // шаг изменения цвета радуги
-    
-    // отрисовка
-    #define MODE 0              // режим при запуске
-    #define MAIN_LOOP 5         // период основного цикла отрисовки (по умолчанию 5)
-    #define SMOOTH 0.5          // коэффициент плавности анимации VU (по умолчанию 0.5)
-    #define SMOOTH_FREQ 0.8     // коэффициент плавности анимации частот (по умолчанию 0.8)
-    #define MAX_COEF 1.8        // коэффициент громкости (максимальное равно срднему * этот коэф) (по умолчанию 1.8)
-    #define MAX_COEF_FREQ 1.2   // коэффициент порога для "вспышки" цветомузыки (по умолчанию 1.5)
-    
-    // сигнал
-    #define MONO 1              // 1 - только один канал (ПРАВЫЙ!!!!! SOUND_R!!!!!), 0 - два канала
-    #define EXP 1.4             // степень усиления сигнала (для более "резкой" работы) (по умолчанию 1.4)
-    
-    // нижний порог шумов
-    int LOW_PASS = 100;         // нижний порог шумов режим VU, ручная настройка
-    int SPEKTR_LOW_PASS = 40;   // нижний порог шумов режим спектра, ручная настройка
-    #define AUTO_LOW_PASS 0     // разрешить настройку нижнего порога шумов при запуске (по умолч. 0)
-    #define EEPROM_LOW_PASS 1   // порог шумов хранится в энергонезависимой памяти (по умолч. 1)
-    #define LOW_PASS_ADD 13     // "добавочная" величина к нижнему порогу, для надёжности (режим VU)
-    #define LOW_PASS_FREQ_ADD 3 // "добавочная" величина к нижнему порогу, для надёжности (режим частот)
-    
-    // режим цветомузыки
-    #define LOW_COLOR RED       // цвет низких частот
-    #define MID_COLOR GREEN     // цвет средних
-    #define HIGH_COLOR YELLOW   // цвет высоких
-    
-<a id="chapter-5"></a>
-## FAQ
-### Основные вопросы
-В: Как скачать с этого грёбаного сайта?  
-О: На главной странице проекта (где ты читаешь этот текст) вверху справа зелёная кнопка **Clone or download**, вот её жми, там будет **Download ZIP**
 
-В: Скачался какой то файл .zip, куда его теперь?  
-О: Это архив. Можно открыть стандартными средствами Windows, но думаю у всех на компьютере установлен WinRAR, архив нужно правой кнопкой и извлечь.
+## Controls
 
-В: Я совсем новичок! Что мне делать с Ардуиной, где взять все программы?  
-О: Читай и смотри видос http://alexgyver.ru/arduino-first/
+Alex Gyver described IR remote control in detail.
+Here I'll describe control with just one button.
+Because we don't have `+` and `-` buttons, our single button changes setting cyclically: once the setting reaches upper limit it drops to the lower limit.
 
-В: Компьютер никак не реагирует на подключение Ардуины!  
-О: Возможно у тебя зарядный USB кабель, а нужен именно data-кабель, по которому можно данные передавать
+**Almighty button:**
 
-В: Ошибка! Скетч не компилируется!  
-О: Путь к скетчу не должен содержать кириллицу. Положи его в корень диска.
+	- Hold button: switch mode cyclically;
+	- Single press: imitates IR remote button "up" (see table below);
+	- Double press: imitates IR remote button "right" (see table below);
+	- Triple press: increase brightness;
+	- Press five times to calibrate the noise thresholds.
 
-В: Сколько стоит?  
-О: Ничего не продаю.
+| Mode				    	| Single press 					| Double press	|
+| --------------------------|-------------------------------|---------------|
+| 0) classical VU meter		| animation smoothness			| -				|
+| 1) rainbow VU meter		| animation smoothness			| rainbow running speed	|
+| 2) 5 symmetrical bars		| animation smoothness			| sensitivity	|
+| 3) 3 bars					| animation smoothness			| sensitivity	|
+| 4) 1 bar					| animation smoothness			| sensitivity	|
+| 5) stroboscope			| light flash smoothness		| frequency		|
+| 6-1) backlight constant color	| color					| saturation	|
+| 6-2) backlight changing color	| speed of color chenge	| saturation	|
+| 6-3) backlight running rainbow	| speed of rainbow		| rainbow step (width)	|
+| 7) Running frequencies	| speed	of running frequencies	| sensitivity	|
+| 8) Spectrum Analyzer	| color step (width of one color cell)	| starting (central) color	|
 
-### Вопросы по этому проекту
 
-<a id="chapter-6"></a>
-## Полезная информация
-* [Мой сайт](http://alexgyver.ru/)
-* [Основной YouTube канал](https://www.youtube.com/channel/UCgtAOyEQdAyjvm9ATCi_Aig?sub_confirmation=1)
-* [YouTube канал про Arduino](https://www.youtube.com/channel/UC4axiS76D784-ofoTdo5zOA?sub_confirmation=1)
-* [Мои видеоуроки по пайке](https://www.youtube.com/playlist?list=PLOT_HeyBraBuMIwfSYu7kCKXxQGsUKcqR)
-* [Мои видеоуроки по Arduino](http://alexgyver.ru/arduino_lessons/)
+## Setting of lower noise threshold
+- Manual: `AUTO_LOW_PASS = 0`, `EEPROM_LOW_PASS = 0`, set up `LOW_PASS` and `SPEKTR_LOW_PASS`;
+- Automatically: `AUTO_LOW_PASS = 1`. While turning the colormusic on, music should be silenced;
+- Reset with button: press the button five times (music should be silenced);
+- (the best choice) From EEPROM: `AUTO_LOW_PASS = 0` and `EEPROM_LOW_PASS = 1`. Then
+  * turn the colormusic on;
+  * silence the music;
+  * press the button five times;
+  * the noise values will be written to the EEPROM and automatically read at every colormusic start up.
