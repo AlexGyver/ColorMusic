@@ -2,7 +2,7 @@
 
 It is Alex Gyver project: [ColorMusic](https://github.com/AlexGyver/ColorMusic).
 Almost everything is made by him. I just fixed some bugs and made little improvements.
-Find differences in [history.md](https://github.com/x3mEr/ColorMusic/history.md)
+Find differences in [history.md](https://github.com/x3mEr/ColorMusic/blob/master/history.md)
 
 *A lot of useful information (different schemes, components, explanation, videos) could be found [here](https://alexgyver.ru/colormusic/).*
 
