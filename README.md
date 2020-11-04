@@ -20,7 +20,6 @@ ColorMusic (individually addressable LED strip WS2812b) is driven by Arduino Nan
 - all settings are stored in EEPROM;
 - support of usual tactile and touch buttons;
 - 9 effects:
-
 	0. VU meter: classical volume bar;
 	1. VU meter: smoothly running rainbow;
 	2. Colormusic by frequencies: 5 symmetrical bars (high-middle-low-middle-high);
@@ -43,11 +42,11 @@ Because we don't have `+` and `-` buttons, our single button changes setting cyc
 
 **Almighty button:**
 
-	- **Hold button**: switch mode cyclically;
-	- **Single press**: imitates IR remote button "up" (see table below);
-	- **Double press**: imitates IR remote button "right" (see table below);
-	- **Triple press**: increase brightness;
-	- **Press five times** to calibrate the noise thresholds.
+- **Hold button**: switches modes;
+- **Single press**: imitates IR remote button "up" (see table below);
+- **Double press**: imitates IR remote button "right" (see table below);
+- **Triple press**: increase brightness;
+- **Press five times** to calibrate the noise thresholds.
 
 | Mode				    	| Single press 					| Double press	|
 | --------------------------|-------------------------------|---------------|
