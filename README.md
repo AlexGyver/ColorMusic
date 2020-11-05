@@ -57,7 +57,7 @@ Because we don't have `+` and `-` buttons, our single button changes setting cyc
 | 4) 1 bar					| animation smoothness			| sensitivity	|
 | 5) stroboscope			| light flash smoothness		| frequency		|
 | 6-1) backlight constant color	| color					| saturation	|
-| 6-2) backlight changing color	| speed of color chenge	| saturation	|
+| 6-2) backlight changing color	| speed of color change	| saturation	|
 | 6-3) backlight running rainbow	| speed of rainbow		| rainbow step (width)	|
 | 7) Running frequencies	| speed	of running frequencies	| sensitivity	|
 | 8) Spectrum Analyzer	| color step (width of one color cell)	| starting (central) color	|

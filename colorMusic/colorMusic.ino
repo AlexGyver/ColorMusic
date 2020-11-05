@@ -14,7 +14,7 @@
   Основано на версии AlexGyver Technologies 2.10
   Версия 1.1
 */
-#define VERSION 1.1
+#define VERSION "1.1.1"
 // ***************************** SETTINGS *****************************
 
 // ----- IR remote settings
@@ -29,8 +29,10 @@
 
 // ----- LED strip
 #define NUM_LEDS 120			// LEDs quantity (max 410)
+#define COLOR_ORDER GRB			// LEDs color order in strip. If colors are wrong - change the order. Try RGB, RBG, GRB, GBR, BRG, BGR
 #define CURRENT_LIMIT 2000		// current limit in mA, "FastLED" library automatically controls the brightness. 0 - turn the limit off
 byte BRIGHTNESS = 200;			// BRIGHTNESS (0 - 255)
+byte EMPTY_BRIGHT = 40;			// brightness of empty (not flashing) LEDs (0 - 255)
 
 // ----- пины подключения
 #define SOUND_R A2				// analog audio in, right channel
@@ -63,7 +65,6 @@ float RAINBOW_STEP = 5.00;		// rainbow color change step - width of rainbow
 #define MONO 1					// 1 - only right channel (SOUND_R), 0 - two channels
 #define EXP 1.4					// signal gain (for more strident animation) (default 1.4)
 #define POTENT 1				// 1 - use potentiometer, 0 - use intrenal reference of 1.1 V
-byte EMPTY_BRIGHT = 40;			// brightness of empty (not flashing) LEDs (0 - 255)
 #define EMPTY_COLOR HUE_PURPLE	// color of empty (not flashing) LEDs. Black if EMPTY_BRIGHT = 0
 
 // ----- lower noise threshold
@@ -75,11 +76,11 @@ uint16_t SPEKTR_LOW_PASS = 40;	// lower noise threshold in frequencies modes (mo
 #define LOW_PASS_FREQ_ADD 3		// additional value to the lower threshold, for reliability (frequencies modes)
 
 // ----- VU modes (#0 and 1)
-float SMOOTH = 0.3;				// VU animation smoothness coefficient (default 0.5)
+float SMOOTH = 0.2;				// VU animation smoothness coefficient (default 0.5)
 #define MAX_COEF 1.8			// loudness coefficient (max loudness = average loudness * MAX_COEF) (default 1.8)
 
 // ----- frequencies modes (#2, 3, 4, 7, 8)
-float SMOOTH_FREQ = 0.6;		// frequencies animation smoothness coefficient (default 0.8)
+float SMOOTH_FREQ = 0.3;		// frequencies animation smoothness coefficient (default 0.8)
 float MAX_COEF_FREQ = 1.2;		// threshold coefficient for colormusic to generate the flash (default 1.5)
 #define SMOOTH_STEP 20			// step of brightness decreasing (more value - faster attenuation of light), i.e. fade rate
 #define LOW_COLOR HUE_RED		// color of low frequencies
@@ -258,8 +259,20 @@ boolean running_flag[3], eeprom_flag;
 
 void setup() {
   Serial.begin(9600);
-  Serial.print(F("VERSION = ")); Serial.println(VERSION);
-  FastLED.addLeds<WS2811, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  if (RESET_SETTINGS) EEPROM.write(1, 0);        // сброс флага настроек
+  // в 1 ячейке хранится число 100. Если нет - значит это первый запуск системы
+  if (KEEP_SETTINGS) {
+    eeprom_timer = millis();
+    eeprom_flag = false;
+    if (EEPROM.read(1) != 100) {
+      //Serial.println(F("First start"));
+      EEPROM.write(1, 100);
+      updateEEPROM();
+    } else {
+      readEEPROM();
+    }
+  }
+  FastLED.addLeds<WS2811, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   if (CURRENT_LIMIT > 0) FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
   FastLED.setBrightness(BRIGHTNESS);
 
@@ -272,7 +285,7 @@ void setup() {
 
   pinMode(POT_GND, OUTPUT);
   digitalWrite(POT_GND, LOW);
-  butt1.setTimeout(900);
+  butt1.setTimeout(800);
 
 #if REMOTE_TYPE != 0
   IRLremote.begin(IR_PIN);
@@ -299,29 +312,11 @@ void setup() {
   cbi(ADCSRA, ADPS1);
   sbi(ADCSRA, ADPS0);
 
-  if (RESET_SETTINGS) EEPROM.write(100, 0);        // сброс флага настроек
-
   if (AUTO_LOW_PASS && !EEPROM_LOW_PASS) {         // если разрешена автонастройка нижнего порога шумов
     autoLowPass();
   }
-  if (EEPROM_LOW_PASS) {                // восстановить значения шумов из памяти
-    LOW_PASS = EEPROM.readInt(70);
-    SPEKTR_LOW_PASS = EEPROM.readInt(72);
-  }
 
-  // в 100 ячейке хранится число 100. Если нет - значит это первый запуск системы
-  if (KEEP_SETTINGS) {
-    eeprom_timer = millis();
-	eeprom_flag = false;
-    if (EEPROM.read(100) != 100) {
-      //Serial.println(F("First start"));
-      EEPROM.write(100, 100);
-      updateEEPROM();
-    } else {
-      readEEPROM();
-    }
-  }
-
+Serial.print(F("VERSION = ")); Serial.println(VERSION);
 #if (SETTINGS_LOG == 1)
   Serial.print(F("this_mode = ")); Serial.println(this_mode);
   Serial.print(F("freq_strobe_mode = ")); Serial.println(freq_strobe_mode);
@@ -915,7 +910,7 @@ void autoLowPass() {
   SPEKTR_LOW_PASS = thisMax + LOW_PASS_FREQ_ADD;  // нижний порог как максимум тишины
   if (EEPROM_LOW_PASS && !AUTO_LOW_PASS) {
     EEPROM.updateInt(70, LOW_PASS);
-    EEPROM.updateInt(72, SPEKTR_LOW_PASS);
+    EEPROM.updateInt(74, SPEKTR_LOW_PASS);
   }
 }
 
@@ -945,48 +940,48 @@ void buttonTick() {
       case 1:
         if (SMOOTH+0.05 > 0.5) SMOOTH = 0.05;
 		else SMOOTH += 0.05;
-        //Serial.print(F("SMOOTH = ")); Serial.println(SMOOTH);
+        Serial.print(F("SMOOTH = ")); Serial.println(SMOOTH);
         break;
       case 2:
       case 3:
       case 4:
         if (SMOOTH_FREQ+0.05 > 1) SMOOTH_FREQ = 0.05;
 		else SMOOTH_FREQ += 0.05;
-        //Serial.print(F("SMOOTH_FREQ = ")); Serial.println(SMOOTH_FREQ);
+        Serial.print(F("SMOOTH_FREQ = ")); Serial.println(SMOOTH_FREQ);
         break;
       case 5:
         if (STROBE_SMOOTH+20 > 255) STROBE_SMOOTH = 0;
 		else STROBE_SMOOTH += 20;
-        //Serial.print(F("STROBE_SMOOTH = ")); Serial.println(STROBE_SMOOTH);
+        Serial.print(F("STROBE_SMOOTH = ")); Serial.println(STROBE_SMOOTH);
         break;
       case 6:
         switch (light_mode) {
           case 0:
             if (LIGHT_COLOR+10 > 255) LIGHT_COLOR = 0;
 			else LIGHT_COLOR += 10;
-            //Serial.print(F("LIGHT_COLOR = ")); Serial.println(LIGHT_COLOR);
+            Serial.print(F("LIGHT_COLOR = ")); Serial.println(LIGHT_COLOR);
             break;
           case 1:
             if (COLOR_SPEED+10 > 255) COLOR_SPEED = 0;
 			else COLOR_SPEED += 10;
-            //Serial.print(F("COLOR_SPEED = ")); Serial.println(COLOR_SPEED);
+            Serial.print(F("COLOR_SPEED = ")); Serial.println(COLOR_SPEED);
             break;
           case 2:
             if (RAINBOW_PERIOD+2 > 14) RAINBOW_PERIOD = -14;
 			else RAINBOW_PERIOD += 2;			// !!!!! БЫЛО 1 - ПРОВЕРИТЬ !!!!!
-            //Serial.print(F("RAINBOW_PERIOD = ")); Serial.println(RAINBOW_PERIOD);
+            Serial.print(F("RAINBOW_PERIOD = ")); Serial.println(RAINBOW_PERIOD);
             break;
         }
         break;
       case 7:
         if (RUNNING_SPEED*2 > 255) RUNNING_SPEED = 3;//1;
 		else RUNNING_SPEED *=2;//+= 10;
-        //Serial.print(F("RUNNING_SPEED = ")); Serial.println(RUNNING_SPEED);
+        Serial.print(F("RUNNING_SPEED = ")); Serial.println(RUNNING_SPEED);
         break;
       case 8:
         if (HUE_STEP*2 > 255) HUE_STEP = 1;
 		else HUE_STEP *= 2; //+20;			// !!!!! БЫЛО 1 - ПРОВЕРИТЬ !!!!!
-        //Serial.print(F("HUE_STEP = ")); Serial.println(HUE_STEP);
+        Serial.print(F("HUE_STEP = ")); Serial.println(HUE_STEP);
         break;
     }
     //break;
@@ -1000,21 +995,21 @@ void buttonTick() {
       case 1:
         if (RAINBOW_STEP+0.5 > 20) RAINBOW_STEP = 0.5;
 		else RAINBOW_STEP += 0.5;
-        //Serial.print(F("RAINBOW_STEP = ")); Serial.println(RAINBOW_STEP);
+        Serial.print(F("RAINBOW_STEP = ")); Serial.println(RAINBOW_STEP);
         break;
       case 2:
       case 3:
       case 4:
-        if (MAX_COEF_FREQ+0.2 > 5) MAX_COEF_FREQ = 0;
+        if (MAX_COEF_FREQ+0.4 > 5) MAX_COEF_FREQ = 0;
 		else MAX_COEF_FREQ += 0.2;
-        //Serial.print(F("MAX_COEF_FREQ = ")); Serial.println(MAX_COEF_FREQ);
+        Serial.print(F("MAX_COEF_FREQ = ")); Serial.println(MAX_COEF_FREQ);
         break;
       case 5: //1500BPM-25Hz-40ms 1200BPM-20Hz-50ms 900BPM-15Hz-67ms 600BPM-10Hz-100ms 300BPM-5Hz-200ms
         if (STROBE_BPM+30 > 150) STROBE_BPM = 30;
 		else STROBE_BPM += 30;
         STROBE_PERIOD = 1./(STROBE_BPM/6)*1000;	// надо делить на 60, но частоту умножаю на 10, чтобы уменьшить операции делю на 6
-        //Serial.print(F("STROBE_BPM = ")); Serial.println(STROBE_BPM);
-        //Serial.print(F("STROBE_PERIOD = ")); Serial.println(STROBE_PERIOD);
+        Serial.print(F("STROBE_BPM = ")); Serial.println(STROBE_BPM);
+        Serial.print(F("STROBE_PERIOD = ")); Serial.println(STROBE_PERIOD);
         break;
       case 6:
         switch (light_mode) {
@@ -1025,24 +1020,24 @@ void buttonTick() {
           case 1:
             if (LIGHT_SAT+20 > 255) LIGHT_SAT = 0;
 			else LIGHT_SAT += 20;
-            //Serial.print(F("LIGHT_SAT = ")); Serial.println(LIGHT_SAT);
+            Serial.print(F("LIGHT_SAT = ")); Serial.println(LIGHT_SAT);
             break;
           case 2:
             if (RAINBOW_STEP_2+1 > 8) RAINBOW_STEP_2 = 0.5;
 			else RAINBOW_STEP_2 += 1;
-            //Serial.print(F("RAINBOW_STEP_2 = ")); Serial.println(RAINBOW_STEP_2);
+            Serial.print(F("RAINBOW_STEP_2 = ")); Serial.println(RAINBOW_STEP_2);
             break;
         }
         break;
       case 7:
         if (MAX_COEF_FREQ+0.4 > 5) MAX_COEF_FREQ = 0.0;
 		else MAX_COEF_FREQ += 0.4;
-        //Serial.print(F("MAX_COEF_FREQ = ")); Serial.println(MAX_COEF_FREQ);
+        Serial.print(F("MAX_COEF_FREQ = ")); Serial.println(MAX_COEF_FREQ);
         break;
       case 8:
         if (HUE_START+20 > 255) HUE_START = 0;
 		else HUE_START += 20;
-        //Serial.print(F("HUE_START = ")); Serial.println(HUE_START);
+        Serial.print(F("HUE_START = ")); Serial.println(HUE_START);
         break;
     }
   } //isDouble()
@@ -1050,7 +1045,7 @@ void buttonTick() {
     if (BRIGHTNESS+40 > 255) BRIGHTNESS = 40;
     else BRIGHTNESS += 40;
     FastLED.setBrightness(BRIGHTNESS);
-    //Serial.print(F("BRIGHTNESS = ")); Serial.println(BRIGHTNESS);
+    Serial.print(F("BRIGHTNESS = ")); Serial.println(BRIGHTNESS);
   }
   if (butt1.hasClicks() && butt1.getClicks() == 5) {	//пять нажатий для калибровки уровня шума. Обязательно в самом конце, т. к. 'getClicks()' method resets count of clicks
     fullLowPass();
@@ -1068,47 +1063,53 @@ void fullLowPass() {
   digitalWrite(MLED_PIN, !MLED_ON);    // выключить светодиод
 }
 void updateEEPROM() {
-  EEPROM.updateByte(1, this_mode);
-  EEPROM.updateByte(2, freq_strobe_mode);
-  EEPROM.updateByte(3, light_mode);
-  EEPROM.updateInt(4, RAINBOW_STEP);
-  EEPROM.updateFloat(8, MAX_COEF_FREQ);
-  EEPROM.updateInt(12, STROBE_BPM);
-  EEPROM.updateInt(16, LIGHT_SAT);
-  EEPROM.updateFloat(20, RAINBOW_STEP_2);
-  EEPROM.updateInt(24, HUE_START);
-  EEPROM.updateFloat(28, SMOOTH);
-  EEPROM.updateFloat(32, SMOOTH_FREQ);
-  EEPROM.updateInt(36, STROBE_SMOOTH);
-  EEPROM.updateInt(40, LIGHT_COLOR);
-  EEPROM.updateInt(44, COLOR_SPEED);
-  EEPROM.updateInt(48, RAINBOW_PERIOD);
-  EEPROM.updateInt(52, RUNNING_SPEED);
-  EEPROM.updateInt(56, HUE_STEP);
-  EEPROM.updateInt(60, EMPTY_BRIGHT);
-  if (KEEP_STATE) EEPROM.updateByte(64, ONstate);
+  EEPROM.updateByte(2, this_mode);
+  EEPROM.updateByte(3, freq_strobe_mode);
+  EEPROM.updateByte(4, light_mode);
+  EEPROM.updateFloat(5, RAINBOW_STEP);
+  EEPROM.updateFloat(9, MAX_COEF_FREQ);
+  EEPROM.updateInt(13, STROBE_BPM);
+  EEPROM.updateByte(17, LIGHT_SAT);
+  EEPROM.updateFloat(18, RAINBOW_STEP_2);
+  EEPROM.updateByte(22, HUE_START);
+  EEPROM.updateFloat(23, SMOOTH);
+  EEPROM.updateFloat(27, SMOOTH_FREQ);
+  EEPROM.updateByte(31, STROBE_SMOOTH);
+  EEPROM.updateByte(32, LIGHT_COLOR);
+  EEPROM.updateByte(33, COLOR_SPEED);
+  EEPROM.updateInt(34, RAINBOW_PERIOD);
+  EEPROM.updateByte(38, RUNNING_SPEED);
+  EEPROM.updateByte(39, HUE_STEP);
+  EEPROM.updateByte(40, BRIGHTNESS);
+  EEPROM.updateByte(41, EMPTY_BRIGHT);
+  if (KEEP_STATE) EEPROM.updateByte(42, ONstate);
 }
 void readEEPROM() {
-  this_mode = EEPROM.readByte(1);
-  freq_strobe_mode = EEPROM.readByte(2);
-  light_mode = EEPROM.readByte(3);
-  RAINBOW_STEP = EEPROM.readInt(4);
-  MAX_COEF_FREQ = EEPROM.readFloat(8);
-  STROBE_BPM = EEPROM.readInt(12);
+  this_mode = EEPROM.readByte(2);
+  freq_strobe_mode = EEPROM.readByte(3);
+  light_mode = EEPROM.readByte(4);
+  RAINBOW_STEP = EEPROM.readFloat(5);
+  MAX_COEF_FREQ = EEPROM.readFloat(9);
+  STROBE_BPM = EEPROM.readInt(13);
   STROBE_PERIOD = 1./(STROBE_BPM/6)*1000;
-  LIGHT_SAT = EEPROM.readInt(16);
-  RAINBOW_STEP_2 = EEPROM.readFloat(20);
-  HUE_START = EEPROM.readInt(24);
-  SMOOTH = EEPROM.readFloat(28);
-  SMOOTH_FREQ = EEPROM.readFloat(32);
-  STROBE_SMOOTH = EEPROM.readInt(36);
-  LIGHT_COLOR = EEPROM.readInt(40);
-  COLOR_SPEED = EEPROM.readInt(44);
-  RAINBOW_PERIOD = EEPROM.readInt(48);
-  RUNNING_SPEED = EEPROM.readInt(52);
-  HUE_STEP = EEPROM.readInt(56);
-  EMPTY_BRIGHT = EEPROM.readInt(60);
-  if (KEEP_STATE) ONstate = EEPROM.readByte(64);
+  LIGHT_SAT = EEPROM.readByte(17);
+  RAINBOW_STEP_2 = EEPROM.readFloat(18);
+  HUE_START = EEPROM.readByte(22);
+  SMOOTH = EEPROM.readFloat(23);
+  SMOOTH_FREQ = EEPROM.readFloat(27);
+  STROBE_SMOOTH = EEPROM.readByte(31);
+  LIGHT_COLOR = EEPROM.readByte(32);
+  COLOR_SPEED = EEPROM.readByte(33);
+  RAINBOW_PERIOD = EEPROM.readInt(34);
+  RUNNING_SPEED = EEPROM.readByte(38);
+  HUE_STEP = EEPROM.readByte(39);
+  BRIGHTNESS = EEPROM.readByte(40);
+  EMPTY_BRIGHT = EEPROM.readByte(41);
+  if (KEEP_STATE) ONstate = EEPROM.readByte(42);
+  if (EEPROM_LOW_PASS) {                // восстановить значения шумов из памяти
+    LOW_PASS = EEPROM.readInt(70);
+    SPEKTR_LOW_PASS = EEPROM.readInt(74);
+  }
 }
 void eepromTick() {
   if ((eeprom_flag) && (millis() - eeprom_timer > 10000)) {  // 10 секунд после последнего нажатия с пульта
