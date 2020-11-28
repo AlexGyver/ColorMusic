@@ -24,7 +24,7 @@
 
 // ----- настройки параметров
 #define KEEP_SETTINGS 1     // хранить ВСЕ настройки в энергонезависимой памяти
-#define KEEP_STATE 1		    // сохранять в памяти состояние вкл/выкл системы (с пульта)
+#define KEEP_STATE 1        // сохранять в памяти состояние вкл/выкл системы (с пульта)
 #define RESET_SETTINGS 0    // сброс настроек в EEPROM памяти (поставить 1, прошиться, поставить обратно 0, прошиться. Всё)
 #define SETTINGS_LOG 0      // вывод всех настроек из EEPROM в порт при запуске
 
@@ -122,65 +122,65 @@ byte HUE_STEP = 5;
 
 // ----- КНОПКИ ПУЛЬТА WAVGAT -----
 #if REMOTE_TYPE == 1
-#define BUTT_UP     0xF39EEBAD
-#define BUTT_DOWN   0xC089F6AD
-#define BUTT_LEFT   0xE25410AD
-#define BUTT_RIGHT  0x14CE54AD
-#define BUTT_OK     0x297C76AD
-#define BUTT_1      0x4E5BA3AD
-#define BUTT_2      0xE51CA6AD
-#define BUTT_3      0xE207E1AD
-#define BUTT_4      0x517068AD
-#define BUTT_5      0x1B92DDAD
-#define BUTT_6      0xAC2A56AD
-#define BUTT_7      0x5484B6AD
-#define BUTT_8      0xD22353AD
-#define BUTT_9      0xDF3F4BAD
-#define BUTT_0      0xF08A26AD
-#define BUTT_STAR   0x68E456AD
-#define BUTT_HASH   0x151CD6AD
+#define BTN_UP     0xF39EEBAD
+#define BTN_DOWN   0xC089F6AD
+#define BTN_LEFT   0xE25410AD
+#define BTN_RIGHT  0x14CE54AD
+#define BTN_OK     0x297C76AD
+#define BTN_1      0x4E5BA3AD
+#define BTN_2      0xE51CA6AD
+#define BTN_3      0xE207E1AD
+#define BTN_4      0x517068AD
+#define BTN_5      0x1B92DDAD
+#define BTN_6      0xAC2A56AD
+#define BTN_7      0x5484B6AD
+#define BTN_8      0xD22353AD
+#define BTN_9      0xDF3F4BAD
+#define BTN_0      0xF08A26AD
+#define BTN_STAR   0x68E456AD
+#define BTN_HASH   0x151CD6AD
 #endif
 
 // ----- КНОПКИ ПУЛЬТА KEYES -----
 #if REMOTE_TYPE == 2
-#define BUTT_UP     0xE51CA6AD
-#define BUTT_DOWN   0xD22353AD
-#define BUTT_LEFT   0x517068AD
-#define BUTT_RIGHT  0xAC2A56AD
-#define BUTT_OK     0x1B92DDAD
-#define BUTT_1      0x68E456AD
-#define BUTT_2      0xF08A26AD
-#define BUTT_3      0x151CD6AD
-#define BUTT_4      0x18319BAD
-#define BUTT_5      0xF39EEBAD
-#define BUTT_6      0x4AABDFAD
-#define BUTT_7      0xE25410AD
-#define BUTT_8      0x297C76AD
-#define BUTT_9      0x14CE54AD
-#define BUTT_0      0xC089F6AD
-#define BUTT_STAR   0xAF3F1BAD
-#define BUTT_HASH   0x38379AD
+#define BTN_UP     0xE51CA6AD
+#define BTN_DOWN   0xD22353AD
+#define BTN_LEFT   0x517068AD
+#define BTN_RIGHT  0xAC2A56AD
+#define BTN_OK     0x1B92DDAD
+#define BTN_1      0x68E456AD
+#define BTN_2      0xF08A26AD
+#define BTN_3      0x151CD6AD
+#define BTN_4      0x18319BAD
+#define BTN_5      0xF39EEBAD
+#define BTN_6      0x4AABDFAD
+#define BTN_7      0xE25410AD
+#define BTN_8      0x297C76AD
+#define BTN_9      0x14CE54AD
+#define BTN_0      0xC089F6AD
+#define BTN_STAR   0xAF3F1BAD
+#define BTN_HASH   0x38379AD
 #endif
 
 // ----- КНОПКИ СВОЕГО ПУЛЬТА -----
 #if REMOTE_TYPE == 3
-#define BUTT_UP     0xE51CA6AD
-#define BUTT_DOWN   0xD22353AD
-#define BUTT_LEFT   0x517068AD
-#define BUTT_RIGHT  0xAC2A56AD
-#define BUTT_OK     0x1B92DDAD
-#define BUTT_1      0x68E456AD
-#define BUTT_2      0xF08A26AD
-#define BUTT_3      0x151CD6AD
-#define BUTT_4      0x18319BAD
-#define BUTT_5      0xF39EEBAD
-#define BUTT_6      0x4AABDFAD
-#define BUTT_7      0xE25410AD
-#define BUTT_8      0x297C76AD
-#define BUTT_9      0x14CE54AD
-#define BUTT_0      0xC089F6AD
-#define BUTT_STAR   0xAF3F1BAD  // *
-#define BUTT_HASH   0x38379AD   // #
+#define BTN_UP     0xE51CA6AD
+#define BTN_DOWN   0xD22353AD
+#define BTN_LEFT   0x517068AD
+#define BTN_RIGHT  0xAC2A56AD
+#define BTN_OK     0x1B92DDAD
+#define BTN_1      0x68E456AD
+#define BTN_2      0xF08A26AD
+#define BTN_3      0x151CD6AD
+#define BTN_4      0x18319BAD
+#define BTN_5      0xF39EEBAD
+#define BTN_6      0x4AABDFAD
+#define BTN_7      0xE25410AD
+#define BTN_8      0x297C76AD
+#define BTN_9      0x14CE54AD
+#define BTN_0      0xC089F6AD
+#define BTN_STAR   0xAF3F1BAD  // *
+#define BTN_HASH   0x38379AD   // #
 #endif
 
 
@@ -694,29 +694,29 @@ void remoteTick() {
     eeprom_flag = true;
     switch (IRdata) {
       // режимы
-      case BUTT_1: this_mode = 0;
+      case BTN_1: this_mode = 0;
         break;
-      case BUTT_2: this_mode = 1;
+      case BTN_2: this_mode = 1;
         break;
-      case BUTT_3: this_mode = 2;
+      case BTN_3: this_mode = 2;
         break;
-      case BUTT_4: this_mode = 3;
+      case BTN_4: this_mode = 3;
         break;
-      case BUTT_5: this_mode = 4;
+      case BTN_5: this_mode = 4;
         break;
-      case BUTT_6: this_mode = 5;
+      case BTN_6: this_mode = 5;
         break;
-      case BUTT_7: this_mode = 6;
+      case BTN_7: this_mode = 6;
         break;
-      case BUTT_8: this_mode = 7;
+      case BTN_8: this_mode = 7;
         break;
-      case BUTT_9: this_mode = 8;
+      case BTN_9: this_mode = 8;
         break;
-      case BUTT_0: fullLowPass();
+      case BTN_0: fullLowPass();
         break;
-      case BUTT_STAR: ONstate = !ONstate; FastLED.clear(); FastLED.show(); updateEEPROM();
+      case BTN_STAR: ONstate = !ONstate; FastLED.clear(); FastLED.show(); updateEEPROM();
         break;
-      case BUTT_HASH:
+      case BTN_HASH:
         switch (this_mode) {
           case 4:
           case 7: if (++freq_strobe_mode > 3) freq_strobe_mode = 0;
@@ -725,9 +725,9 @@ void remoteTick() {
             break;
         }
         break;
-      case BUTT_OK: digitalWrite(MLED_PIN, settings_mode ^ MLED_ON); settings_mode = !settings_mode;
+      case BTN_OK: digitalWrite(MLED_PIN, settings_mode ^ MLED_ON); settings_mode = !settings_mode;
         break;
-      case BUTT_UP:
+      case BTN_UP:
         if (settings_mode) {
           // ВВЕРХ общие настройки
           EMPTY_BRIGHT = smartIncr(EMPTY_BRIGHT, 5, 0, 255);
@@ -760,7 +760,7 @@ void remoteTick() {
           }
         }
         break;
-      case BUTT_DOWN:
+      case BTN_DOWN:
         if (settings_mode) {
           // ВНИЗ общие настройки
           EMPTY_BRIGHT = smartIncr(EMPTY_BRIGHT, -5, 0, 255);
@@ -793,7 +793,7 @@ void remoteTick() {
           }
         }
         break;
-      case BUTT_LEFT:
+      case BTN_LEFT:
         if (settings_mode) {
           // ВЛЕВО общие настройки
           BRIGHTNESS = smartIncr(BRIGHTNESS, -20, 0, 255);
@@ -826,7 +826,7 @@ void remoteTick() {
           }
         }
         break;
-      case BUTT_RIGHT:
+      case BTN_RIGHT:
         if (settings_mode) {
           // ВПРАВО общие настройки
           BRIGHTNESS = smartIncr(BRIGHTNESS, 20, 0, 255);
