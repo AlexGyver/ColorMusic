@@ -12,7 +12,7 @@
 
 /*
   Основано на версии AlexGyver Technologies 2.10
-  Версия 1.1
+  Версия 1.1.1
 */
 #define VERSION "1.1.1"
 // ***************************** SETTINGS *****************************
@@ -39,7 +39,7 @@ byte EMPTY_BRIGHT = 40;			// brightness of empty (not flashing) LEDs (0 - 255)
 #define SOUND_L A1				// analog audio in, left channel
 #define SOUND_R_FREQ A3			// analog audio in for modes with frequencies (modes 2, 3, 4, 7, 8)
 #define BTN_PIN 3				// button (PIN --- КНОПКА --- GND)
-#define BTN_IS_TOUCH 1			// 0 - usual tactile button, 1 - touch button, e. g. TTP223 - in this case 'A' jumper should be opened - button outputs logical "1" when touched
+#define BTN_IS_TOUCH 0			// 0 - usual tactile button, 1 - touch button, e. g. TTP223 - in this case 'A' jumper should be opened - button outputs logical "1" when touched
 
 #if defined(__AVR_ATmega32U4__)	// pins for Arduino Pro Micro (смотри схему для Pro Micro на странице проекта!!!)
 #define MLED_PIN 17				// пин светодиода режимов на ProMicro, т.к. обычный не выведен.
@@ -304,7 +304,7 @@ void setup() {
 #endif
 
   // жуткая магия, меняем частоту оцифровки до 18 кГц
-  // команды на ебучем ассемблере, даже не спрашивайте, как это работает
+  // команды на *** ассемблере, даже не спрашивайте, как это работает
   // поднимаем частоту опроса аналогового порта до 38.4 кГц, по теореме
   // Котельникова (Найквиста) частота дискретизации будет 19.2 кГц
   // http://yaab-arduino.blogspot.ru/2015/02/fast-sampling-from-analog-input.html
@@ -335,6 +335,7 @@ Serial.print(F("VERSION = ")); Serial.println(VERSION);
   Serial.print(F("RAINBOW_PERIOD = ")); Serial.println(RAINBOW_PERIOD);
   Serial.print(F("RUNNING_SPEED = ")); Serial.println(RUNNING_SPEED);
   Serial.print(F("HUE_STEP = ")); Serial.println(HUE_STEP);
+  Serial.print(F("BRIGHTNESS = ")); Serial.println(BRIGHTNESS);
   Serial.print(F("EMPTY_BRIGHT = ")); Serial.println(EMPTY_BRIGHT);
   Serial.print(F("ONstate = ")); Serial.println(ONstate);
 #endif

@@ -2,8 +2,8 @@
 
 - version: 1.1.1
 - add: BRIGHTNESS is stored in EEPROM now and loaded at colormusic start up (if `EEPROM_LOW_PASS 1`);
-- upd: EEPROM optimised - correct data types are stores and read;
-- fix: `LOW_PASS` and `SPEKTR_LOW_PASS` had wrong sizes in EEPROM. Now they occypy 4 bytes each, so are compstible with SAMD chips integer data type size.
+- upd: EEPROM optimised - correct data types are stored and read;
+- fix: `LOW_PASS` and `SPEKTR_LOW_PASS` had wrong sizes in EEPROM. Now they occupy 4 bytes each, so are compatible with SAMD chips integer data type size.
 
 **2020.11.04**
 
