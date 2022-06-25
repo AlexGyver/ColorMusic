@@ -43,8 +43,8 @@ Because we don't have `+` and `-` buttons, our single button changes setting cyc
 **Almighty button:**
 
 - **Hold button**: switches modes;
-- **Single press**: imitates IR remote button "up" (see table below);
-- **Double press**: imitates IR remote button "right" (see table below);
+- **Single press**: imitates IR remote button "right" (see table below);
+- **Double press**: imitates IR remote button "up" (see table below);
 - **Triple press**: increase brightness;
 - **Press five times** to calibrate the noise thresholds.
 

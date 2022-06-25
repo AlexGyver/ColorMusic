@@ -39,7 +39,7 @@ byte EMPTY_BRIGHT = 40;			// brightness of empty (not flashing) LEDs (0 - 255)
 #define SOUND_L A1				// analog audio in, left channel
 #define SOUND_R_FREQ A3			// analog audio in for modes with frequencies (modes 2, 3, 4, 7, 8)
 #define BTN_PIN 3				// button (PIN --- КНОПКА --- GND)
-#define BTN_IS_TOUCH 0			// 0 - usual tactile button, 1 - touch button, e. g. TTP223 - in this case 'A' jumper should be opened - button outputs logical "1" when touched
+#define BTN_IS_TOUCH 1			// 0 - usual tactile button, 1 - touch button, e. g. TTP223 - in this case 'A' jumper should be opened - button outputs logical "1" when touched
 
 #if defined(__AVR_ATmega32U4__)	// pins for Arduino Pro Micro (смотри схему для Pro Micro на странице проекта!!!)
 #define MLED_PIN 17				// пин светодиода режимов на ProMicro, т.к. обычный не выведен.
@@ -258,7 +258,7 @@ boolean running_flag[3], eeprom_flag;
 // ------------------------------ ДЛЯ РАЗРАБОТЧИКОВ --------------------------------
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   if (RESET_SETTINGS) EEPROM.write(1, 0);        // сброс флага настроек
   // в 1 ячейке хранится число 100. Если нет - значит это первый запуск системы
   if (KEEP_SETTINGS) {
@@ -286,6 +286,7 @@ void setup() {
   pinMode(POT_GND, OUTPUT);
   digitalWrite(POT_GND, LOW);
   butt1.setTimeout(800);
+  butt1.setStepTimeout(100);
 
 #if REMOTE_TYPE != 0
   IRLremote.begin(IR_PIN);
@@ -929,11 +930,13 @@ void analyzeAudio() {
 void buttonTick() {
   butt1.tick();  // обязательная функция отработки. Должна постоянно опрашиваться
   if (butt1.isHolded()){				//кнопка удержана - изменить режим
+    //Serial.println("HoldedPress");
     eeprom_timer = millis();
     eeprom_flag = true;
     if (++this_mode >= MODE_AMOUNT) this_mode = 0;
   }
   if (butt1.isSingle()){				//аналог нажатия на пульте кновки "вправо" - регулировка плавности или скорости анимации
+    //Serial.println("SinglePress");
     eeprom_timer = millis();
     eeprom_flag = true;
     switch (this_mode) {
@@ -988,6 +991,7 @@ void buttonTick() {
     //break;
   }	//isSingle
   if (butt1.isDouble()){				//аналог нажатия на пульте кновки "вверх" - регулировка чувствительности, или насыщенности, или шага радуги
+    //Serial.println("DoublePress");
     eeprom_timer = millis();
     eeprom_flag = true;
     switch (this_mode) {
@@ -1043,12 +1047,14 @@ void buttonTick() {
     }
   } //isDouble()
   if (butt1.isTriple()){
+    //Serial.println("TripplePress");
     if (BRIGHTNESS+40 > 255) BRIGHTNESS = 40;
     else BRIGHTNESS += 40;
     FastLED.setBrightness(BRIGHTNESS);
     Serial.print(F("BRIGHTNESS = ")); Serial.println(BRIGHTNESS);
   }
   if (butt1.hasClicks() && butt1.getClicks() == 5) {	//пять нажатий для калибровки уровня шума. Обязательно в самом конце, т. к. 'getClicks()' method resets count of clicks
+    //Serial.println("FifthPress");
     fullLowPass();
   }
 }
